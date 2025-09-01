@@ -1,58 +1,71 @@
-import { traits, saveProgress, loadProgress, clamp01to10 } from '../state/traits.js';
+import Phaser from 'phaser';
 
 export default class GameScene extends Phaser.Scene {
-  constructor(){ super('Game'); }
-  preload(){}
-
-  create(){
-    // temp player texture
-    const g = this.add.graphics();
-    g.fillStyle(0x00ffcc, 1);
-    g.fillCircle(8,8,8);
-    g.generateTexture('player', 16,16);
-    g.destroy();
-
-    this.player = this.physics.add.sprite(200, 200, 'player').setCollideWorldBounds(true);
-    this.cursors = this.input.keyboard.createCursorKeys();
-    this.keyB = this.input.keyboard.addKey('B');
-
-    this.add.text(16, 16, 'Arrow keys to move\nSPACE: +1 Empathy (demo)\nB: Toggle Character Board',
-      { font: '16px monospace', fill: '#ffffff' });
-
-    loadProgress();
-    this.events.on('updateTraits', () => {
-      const el = document.getElementById('traits');
-      el.innerHTML = Object.entries(traits)
-        .map(([k,v]) => `${k.toUpperCase()}: ${v}/10`).join('<br>');
-    });
-    this.events.emit('updateTraits');
-
-    document.getElementById('closeBoard').onclick = () => {
-      document.getElementById('charboard').style.display = 'none';
-    };
-
-    // demo “choice”: press SPACE to change a trait
-    this.input.keyboard.on('keydown-SPACE', () => {
-      traits.empathy = clamp01to10(traits.empathy + 1);
-      saveProgress();
-      this.events.emit('updateTraits');
-      const t = this.add.text(this.player.x-32, this.player.y-24, '+1 Empathy',
-        { font:'12px monospace', fill:'#00ff00' });
-      this.time.delayedCall(600, () => t.destroy());
-    });
+  constructor() {
+    super('GameScene');
   }
 
-  update(){
-    const speed = 160;
-    this.player.setVelocity(0);
-    if (this.cursors.left.isDown) this.player.setVelocityX(-speed);
-    else if (this.cursors.right.isDown) this.player.setVelocityX(speed);
-    if (this.cursors.up.isDown) this.player.setVelocityY(-speed);
-    else if (this.cursors.down.isDown) this.player.setVelocityY(speed);
+  preload() {
+    // Load map + both tilesets
+    this.load.tilemapTiledJSON('citymap', '/maps/city01.tmj');
+    this.load.image('CityMap', '/tilesets/CityMap.png');   // your main tileset
+    this.load.image('Sample', '/tilesets/Sample.png');     // extra tileset you pasted buildings from
+  }
 
-    if (Phaser.Input.Keyboard.JustDown(this.keyB)) {
-      const board = document.getElementById('charboard');
-      board.style.display = (board.style.display === 'none' || !board.style.display) ? 'block' : 'none';
+  create() {
+    // --- map ---
+    const map = this.make.tilemap({ key: 'citymap' });
+
+    // --- tilesets ---
+    const cityTileset = map.addTilesetImage('CityMap', 'CityMap');
+    const sampleTileset = map.addTilesetImage('Sample', 'Sample');
+
+    // include both so Tiled can resolve everything
+    const tilesets = [cityTileset, sampleTileset];
+
+    // --- layers (names must match exactly from Tiled!) ---
+    const ground = map.createLayer('Ground', tilesets, 0, 0);
+    const walls = map.createLayer('Wall', tilesets, 0, 0);
+
+    // Enable collision on walls (make sure "Walls" layer in Tiled has collidable tiles)
+    walls.setCollisionByExclusion([-1]);
+
+    // --- player (blue dot) ---
+    this.player = this.add.circle(100, 100, 8, 0x0000ff);
+    this.physics.add.existing(this.player);
+    this.player.body.setCollideWorldBounds(true);
+
+    // collide player with walls
+    this.physics.add.collider(this.player, walls);
+
+    // --- camera follow ---
+    this.cameras.main.startFollow(this.player, true, 0.08, 0.08);
+
+    this.cameras.main.setZoom(1.5);
+
+
+    // --- input ---
+    this.cursors = this.input.keyboard.createCursorKeys();
+  }
+
+  update() {
+    const speed = 100;
+    const body = this.player.body;
+
+    body.setVelocity(0);
+
+    if (this.cursors.left.isDown) {
+      body.setVelocityX(-speed);
+    } else if (this.cursors.right.isDown) {
+      body.setVelocityX(speed);
     }
+
+    if (this.cursors.up.isDown) {
+      body.setVelocityY(-speed);
+    } else if (this.cursors.down.isDown) {
+      body.setVelocityY(speed);
+    }
+
+    body.velocity.normalize().scale(speed);
   }
 }

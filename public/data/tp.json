@@ -1,0 +1,11 @@
+[
+  {
+    "id": "help_old_woman",
+    "title": "Help at the shop",
+    "text": "An elderly person drops groceries near the crosswalk.",
+    "choices": [
+      { "id": "help",  "text": "Help them carry the bags.", "deltas": { "empathy": 2, "courage": 1 } },
+      { "id": "ignore","text": "Walk away.",                 "deltas": { "selfishness": 2 } }
+    ]
+  }
+]
