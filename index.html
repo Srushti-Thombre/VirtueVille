@@ -1,0 +1,27 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title>VirtueVille</title>
+    <style>
+      html, body, #game { height:100%; margin:0; background:#0e0e0e; }
+      #ui { position: absolute; inset: 0; pointer-events: none; font-family: system-ui, sans-serif; }
+      .minimap { position:absolute; right:16px; top:16px; width:160px; height:120px; background: rgba(255,255,255,.07); border:1px solid #666; border-radius:8px;}
+      .charboard { position:absolute; left:50%; top:50%; transform: translate(-50%,-50%); background: #111; color:#fff; padding:20px; border-radius:12px; display:none; width: 420px; box-shadow: 0 10px 30px rgba(0,0,0,.5);}
+      .btn { pointer-events:auto; padding:8px 12px; margin-top:12px; border:0; border-radius:8px; background:#30d5c8; }
+    </style>
+  </head>
+  <body>
+    <div id="game"></div>
+    <div id="ui">
+      <div class="minimap" id="minimap"></div>
+      <div class="charboard" id="charboard">
+        <h3>Character Board (WIP)</h3>
+        <div id="traits"></div>
+        <button class="btn" id="closeBoard">Close</button>
+      </div>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
