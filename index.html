@@ -1,27 +1,38 @@
-<!doctype html>
-<html>
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1.0">
-    <title>VirtueVille</title>
-    <style>
-      html, body, #game { height:100%; margin:0; background:#0e0e0e; }
-      #ui { position: absolute; inset: 0; pointer-events: none; font-family: system-ui, sans-serif; }
-      .minimap { position:absolute; right:16px; top:16px; width:160px; height:120px; background: rgba(255,255,255,.07); border:1px solid #666; border-radius:8px;}
-      .charboard { position:absolute; left:50%; top:50%; transform: translate(-50%,-50%); background: #111; color:#fff; padding:20px; border-radius:12px; display:none; width: 420px; box-shadow: 0 10px 30px rgba(0,0,0,.5);}
-      .btn { pointer-events:auto; padding:8px 12px; margin-top:12px; border:0; border-radius:8px; background:#30d5c8; }
-    </style>
-  </head>
-  <body>
-    <div id="game"></div>
-    <div id="ui">
-      <div class="minimap" id="minimap"></div>
-      <div class="charboard" id="charboard">
-        <h3>Character Board (WIP)</h3>
-        <div id="traits"></div>
-        <button class="btn" id="closeBoard">Close</button>
-      </div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VirtueVille - Home</title>
+  <link rel="stylesheet" href="home.css">
+</head>
+<body>
+  <div class="banner">
+    <div class="slider" style="--quantity: 12;">
+      <div class="item" style="--position:1"><img src="home_assets/boy1.png" alt="Boy 1"></div>
+      <div class="item" style="--position:2"><img src="home_assets/girl1.png" alt="Girl 1"></div>
+      <div class="item" style="--position:3"><img src="home_assets/man1.png" alt="Man 1"></div>
+      <div class="item" style="--position:4"><img src="home_assets/woman1.png" alt="Woman 1"></div>
+      <div class="item" style="--position:5"><img src="home_assets/boy2.png" alt="Boy 2"></div>
+      <div class="item" style="--position:6"><img src="home_assets/girl2.png" alt="Girl 2"></div>
+      <div class="item" style="--position:7"><img src="home_assets/man2.png" alt="Man 2"></div>
+      <div class="item" style="--position:8"><img src="home_assets/woman2.png" alt="Woman 2"></div>
+      <div class="item" style="--position:9"><img src="home_assets/boy3.png" alt="Boy 3"></div>
+      <div class="item" style="--position:10"><img src="home_assets/girl3.png" alt="Girl 3"></div>
+      <div class="item" style="--position:11"><img src="home_assets/man3.png" alt="Man 3"></div>
+      <div class="item" style="--position:12"><img src="home_assets/woman3.png" alt="Woman 3"></div>
     </div>
-    <script type="module" src="/src/main.js"></script>
-  </body>
+
+    <div class="content">
+      <h1>Welcome to VirtueVille</h1>
+      <button id="playBtn">Play</button>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById("playBtn").addEventListener("click", () => {
+      window.location.href = "phaser.html";
+    });
+  </script>
+</body>
 </html>
