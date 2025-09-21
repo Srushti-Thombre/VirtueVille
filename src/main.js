@@ -13,3 +13,10 @@ const config = {
 };
 
 new Phaser.Game(config);
+// in main.js
+fetch('/check-session')
+  .then(res => res.json())
+  .then(data => {
+    if (!data.loggedIn) window.location.href = '/auth.html';
+    else startGame();
+  });

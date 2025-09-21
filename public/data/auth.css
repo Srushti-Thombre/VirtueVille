@@ -1,0 +1,204 @@
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap");
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Poppins", sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background-color: #ddd;
+}
+
+.container {
+  background-color: #fff;
+  width: 760px;
+  max-width: 100vw;
+  height: 480px;
+  position: relative;
+  overflow: hidden;
+  border-radius: 10px;
+  box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* Forms */
+.forms-container {
+  position: absolute;
+  width: 50%;
+  height: 100%;
+  text-align: center;
+  top: 0;
+  left: 0;
+}
+
+.form-control {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  transition: all 0.5s ease;
+}
+
+.form-control h2 {
+  margin-bottom: 20px;
+  font-size: 2rem;
+  color: #333;
+}
+
+.form-control input {
+  margin: 10px 0;
+  border: none;
+  padding: 12px;
+  background-color: #efefef;
+  border-radius: 5px;
+}
+
+.form-control button {
+  border: none;
+  padding: 14px;
+  margin-top: 10px;
+  background-color: #059669;
+  border-radius: 5px;
+  color: #fff;
+  font-weight: 500;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.form-control button:hover {
+  background-color: #047857;
+}
+
+/* Default states */
+.signup-form {
+  opacity: 0;
+  z-index: 1;
+  transform: translateX(100%);
+}
+
+.signin-form {
+  opacity: 1;
+  z-index: 2;
+  transform: translateX(0%);
+}
+
+/* Intro sections */
+.intros-container {
+  position: absolute;
+  left: 50%;
+  width: 50%;
+  height: 100%;
+  top: 0;
+  text-align: center;
+}
+
+.intro-control {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  color: #fff;
+  background: linear-gradient(170deg, #34d399, #059669);
+  transition: all 0.5s ease;
+}
+
+.intro-control h2 {
+  margin-bottom: 10px;
+}
+
+.intro-control p {
+  font-size: 0.9rem;
+  margin-bottom: 20px;
+}
+
+.intro-control button {
+  border: none;
+  padding: 12px 30px;
+  border-radius: 50px;
+  background-color: #10b981;
+  color: #fff;
+  font-weight: 500;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.intro-control button:hover {
+  background-color: #059669;
+}
+
+/* Default visible intro */
+.signin-intro {
+  opacity: 1;
+  z-index: 2;
+}
+
+.signup-intro {
+  opacity: 0;
+  z-index: 1;
+}
+
+/* When toggled */
+.container.change .signup-form {
+  opacity: 1;
+  z-index: 2;
+  transform: translateX(0%);
+}
+
+.container.change .signin-form {
+  opacity: 0;
+  z-index: 1;
+  transform: translateX(-100%);
+}
+
+.container.change .signin-intro {
+  opacity: 0;
+  z-index: 1;
+  transform: translateX(100%);
+}
+
+.container.change .signup-intro {
+  opacity: 1;
+  z-index: 2;
+  transform: translateX(0%);
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .container {
+    width: 100%;
+    height: auto;
+    flex-direction: column;
+  }
+
+  .forms-container,
+  .intros-container {
+    position: relative;
+    width: 100%;
+    height: auto;
+  }
+
+  .form-control {
+    position: relative;
+    height: auto;
+    transform: translateX(0%) !important;
+    opacity: 1 !important;
+  }
+
+  .intro-control {
+    position: relative;
+    height: auto;
+    transform: translateX(0%) !important;
+    opacity: 1 !important;
+  }
+}

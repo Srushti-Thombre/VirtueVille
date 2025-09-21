@@ -13,7 +13,20 @@
     "vite": "^5.0.0"
   },
   "dependencies": {
-    "phaser": "^3.70.0"
-  }
+    "express": "^5.1.0",
+    "express-session": "^1.18.2",
+    "phaser": "^3.70.0",
+    "sqlite3": "^5.1.7"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Srushti-Thombre/VirtueVille.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Srushti-Thombre/VirtueVille/issues"
+  },
+  "homepage": "https://github.com/Srushti-Thombre/VirtueVille#readme"
 }
-
