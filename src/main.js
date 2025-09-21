@@ -1,6 +1,7 @@
-import Phaser from 'phaser';
+import * as Phaser from "https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.esm.js";
 import GameScene from './scenes/GameScene.js';
 
+// Phaser game configuration
 const config = {
   type: Phaser.AUTO,
   parent: 'game',
@@ -8,15 +9,12 @@ const config = {
   height: 540,
   backgroundColor: '#1c1c1c',
   pixelArt: true,
-  physics: { default: 'arcade', arcade: { gravity: { y: 0 }, debug: false } },
+  physics: {
+    default: 'arcade',
+    arcade: { gravity: { y: 0 }, debug: false }
+  },
   scene: [GameScene]
 };
 
+// Start the Phaser game immediately
 new Phaser.Game(config);
-// in main.js
-fetch('/check-session')
-  .then(res => res.json())
-  .then(data => {
-    if (!data.loggedIn) window.location.href = '/auth.html';
-    else startGame();
-  });
