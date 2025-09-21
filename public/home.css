@@ -1,0 +1,105 @@
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+body {
+  position: relative;
+  margin: 0;
+  height: 100vh;
+  font-family: 'Press Start 2P', cursive;
+  overflow: hidden;
+}
+
+body::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: url("tilesets/city01.png") no-repeat center center / cover;
+  background-size: cover;
+  opacity: 0.5; /* set opacity */
+  z-index: -1; /* keep it behind content */
+}
+
+
+/*body {
+  margin: 0;
+  background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+   font-family: 'Press Start 2P', cursive;
+  overflow: hidden;
+}*/
+
+.banner {
+  width: 100%;
+  height: 100vh;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  text-align: center;
+}
+
+/* Rotating 3D carousel */
+.banner .slider {
+  position: absolute;
+  width: 220px;
+  height: 280px;
+  top: 15%;
+  left: 50%;
+  transform-style: preserve-3d;
+  transform: perspective(1200px);
+  animation: autorun 20s linear infinite;
+}
+
+@keyframes autorun {
+  from { transform: perspective(1200px) rotateY(0deg); }
+  to { transform: perspective(1200px) rotateY(360deg); }
+}
+
+.banner .slider .item {
+  position: absolute;
+  inset: 0;
+  transform:
+    rotateY(calc((var(--position) - 1) * (360deg / var(--quantity))))
+    translateZ(400px); /* brings images forward */
+}
+
+.banner .slider .item img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 12px;
+}
+
+/* Title + Button */
+.banner .content {
+  position: relative;
+  top: 250px;
+  text-align: center;
+}
+
+.banner .content h1 {
+  font-size: 1.2em;
+  color: #333;
+  margin-bottom: 20px;
+}
+
+.banner .content button {
+  font-family: 'Press Start 2P', cursive;
+  padding: 12px 24px;
+  font-size: 0.8em;
+  color: white;
+  background: rgb(53, 214, 12);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.banner .content button:hover {
+  background: green;
+}
+.banner .content button:active {
+  background: #111;
+}
