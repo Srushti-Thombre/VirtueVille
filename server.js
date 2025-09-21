@@ -124,6 +124,6 @@ app.get('/GameScene', (req, res) => {
         return res.redirect('/auth.html'); // not logged in → go to auth page
     }
 
-    res.sendFile(path.join(__dirname, 'view/index.html')); // your actual scene page
+    res.sendFile(path.join(__dirname, 'view/game.html')); // your actual scene page
 });
 app.use(express.static(path.join(__dirname)));
