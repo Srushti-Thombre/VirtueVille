@@ -54,6 +54,61 @@
          "y":0
         }, 
         {
+         "draworder":"topdown",
+         "id":3,
+         "name":"library",
+         "objects":[
+                {
+                 "height":19,
+                 "id":4,
+                 "name":"library",
+                 "rotation":0,
+                 "text":
+                    {
+                     "text":"Library",
+                     "wrap":true
+                    },
+                 "type":"",
+                 "visible":true,
+                 "width":83,
+                 "x":382.5,
+                 "y":207.833333333333
+                }],
+         "opacity":1,
+         "type":"objectgroup",
+         "visible":true,
+         "x":0,
+         "y":0
+        }, 
+        {
+         "draworder":"topdown",
+         "id":4,
+         "name":"bus_stop",
+         "objects":[
+                {
+                 "height":19,
+                 "id":7,
+                 "name":"bus_stop",
+                 "rotation":0,
+                 "text":
+                    {
+                     "color":"#ffffff",
+                     "text":"Bus Stop",
+                     "wrap":true
+                    },
+                 "type":"",
+                 "visible":true,
+                 "width":83,
+                 "x":397.5,
+                 "y":285.5
+                }],
+         "opacity":1,
+         "type":"objectgroup",
+         "visible":true,
+         "x":0,
+         "y":0
+        }, 
+        {
          "data":[1431, 1432, 1433, 1434, 1435, 0, 0, 0, 1592, 1593, 1592, 1593, 1592, 1592, 1593, 1592, 1593, 1592, 1593, 1592, 1593, 1592, 1593, 1592, 1593, 1600, 1601, 0, 79, 5, 5, 5, 5, 5, 5, 5, 80, 498, 0, 0, 0, 513, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
             1488, 1489, 1490, 1491, 1492, 0, 0, 0, 1649, 1650, 1649, 1650, 1649, 1649, 1650, 1649, 1650, 1649, 1650, 1649, 1650, 1649, 1650, 1649, 1650, 1657, 1658, 0, 116, 1323, 40, 40, 40, 40, 40, 40, 117, 0, 0, 571, 0, 513, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
             1545, 1546, 1547, 1548, 1549, 0, 0, 0, 1706, 1707, 1708, 1709, 1710, 1711, 1712, 1713, 1714, 1706, 1707, 1708, 1709, 1710, 1711, 1712, 1713, 1714, 1715, 0, 473, 473, 473, 473, 473, 473, 473, 473, 473, 0, 537, 608, 536, 513, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 605, 0, 0, 0, 0, 0,
@@ -110,8 +165,8 @@
          "x":0,
          "y":0
         }],
- "nextlayerid":3,
- "nextobjectid":1,
+ "nextlayerid":5,
+ "nextobjectid":8,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.11.2",
@@ -120,7 +175,7 @@
         {
          "columns":37,
          "firstgid":1,
-         "image":"..\/..\/..\/UnitySrushti\/assets\/kenney_roguelike-modern-city\/Tilemap\/tilemap_packed.png",
+         "image":"..\/tilesets\/CityMap.png",
          "imageheight":448,
          "imagewidth":592,
          "margin":0,
@@ -133,7 +188,7 @@
         {
          "columns":57,
          "firstgid":1037,
-         "image":"..\/..\/..\/UnitySrushti\/assets\/kenney_roguelike-modern-city\/Sample.png",
+         "image":"..\/tilesets\/Sample.png",
          "imageheight":515,
          "imagewidth":918,
          "margin":0,
