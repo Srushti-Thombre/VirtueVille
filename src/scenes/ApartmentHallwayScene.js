@@ -7,7 +7,6 @@ class ApartmentHallwayScene extends Phaser.Scene {
     }
 
     preload() {
-        // Load assets
         this.load.tilemapTiledJSON('hallwayMap', 'maps/hallwaytilemap.tmj');
         this.load.image('hallwayTiles', 'tilesets/CityMap.png');
         this.load.spritesheet('player', 'kenney_toon-characters-1/Male adventurer/Tilesheet/character_maleAdventurer_sheet.png', { frameWidth: 96, frameHeight: 128 });
@@ -17,19 +16,26 @@ class ApartmentHallwayScene extends Phaser.Scene {
     create() {
         console.log("Game Started and Scene Created.");
 
-        // Map setup
+        // --- Load map ---
         const map = this.make.tilemap({ key: 'hallwayMap' });
-        const tileset = map.addTilesetImage('kenny', 'hallwayTiles');
-        const floorAndWallsLayer = map.createLayer('FloorAndWalls', tileset, 0, 0);
-        map.createLayer('Objects', tileset, 0, 0);
+        console.log("Available layers:", map.layers.map(l => l.name));
 
-        // Characters
+        // Tileset
+        const tileset = map.addTilesetImage('kenny', 'hallwayTiles');
+
+        // Create layers
+        const floorAndWallsLayer = map.createLayer('FloorAndWalls', tileset, 0, 0);
+        const objectsLayer = map.createLayer('Objects', tileset, 0, 0);
+
+        // Collisions
+        floorAndWallsLayer.setCollisionByProperty({ collides: true });
+
+        // --- Player & NPC ---
         this.player = this.physics.add.sprite(256, 240, 'player').setScale(0.3);
         this.neighbor = this.physics.add.sprite(320, 112, 'neighbor').setScale(0.3);
         this.neighbor.body.setImmovable(true);
 
-        // Collisions
-        floorAndWallsLayer.setCollisionByProperty({ collides: true });
+        // Colliders
         this.physics.add.collider(this.player, floorAndWallsLayer);
         this.physics.add.collider(this.player, this.neighbor);
 
@@ -37,10 +43,8 @@ class ApartmentHallwayScene extends Phaser.Scene {
         this.cameras.main.startFollow(this.player, true);
         this.cameras.main.setZoom(2);
 
-        // Dialogue state
+        // Dialogue setup
         this.neighbor.dialogueState = 'IDLE';
-
-        // NPC greeting (above head)
         this.helpText = this.add.text(0, 0, 'Hello, could you help me please!', {
             fontSize: '10px',
             fill: '#000000',
@@ -49,7 +53,6 @@ class ApartmentHallwayScene extends Phaser.Scene {
         }).setOrigin(0).setDepth(1);
         this.dialogueBox = this.add.graphics().setDepth(0);
 
-        // Placeholder for problem text
         this.problemText = this.add.text(
             this.scale.width / 2,
             this.scale.height / 2,
@@ -64,28 +67,57 @@ class ApartmentHallwayScene extends Phaser.Scene {
             }
         ).setOrigin(0.5).setScrollFactor(0).setDepth(999).setVisible(false);
 
-        // Animations
-        this.anims.create({
-            key: 'left',
-            frames: this.anims.generateFrameNumbers('player', { start: 4, end: 5 }),
-            frameRate: 10,
-            repeat: -1
-        });
-        this.anims.create({
-            key: 'turn',
-            frames: [{ key: 'player', frame: 0 }],
-            frameRate: 20
-        });
-        this.anims.create({
-            key: 'right',
-            frames: this.anims.generateFrameNumbers('player', { start: 2, end: 3 }),
-            frameRate: 10,
-            repeat: -1
-        });
-
-        // Input
+        // Animations & Input
+        this.createAnimations();
         this.cursors = this.input.keyboard.createCursorKeys();
         this.interactKey = this.input.keyboard.addKey('Y');
+
+        // --- EXIT ZONE (hardcoded coordinates) ---
+        const exitZone = this.add.zone(240, 32, 32, 32).setOrigin(0, 0); // Adjust coordinates & size
+        this.physics.world.enable(exitZone);
+        exitZone.body.setAllowGravity(false);
+        exitZone.body.setImmovable(true);
+        exitZone.triggered = false;
+
+        // Debug rectangle
+        const debugRect = this.add.graphics();
+        debugRect.lineStyle(2, 0xff0000, 1);
+        debugRect.strokeRect(exitZone.x, exitZone.y, exitZone.width, exitZone.height);
+
+        // Overlap
+        this.physics.add.overlap(this.player, exitZone, () => {
+            if (!exitZone.triggered) {
+                exitZone.triggered = true;
+                console.log("Player hit exit zone!");
+                this.scene.start('GameScene');
+            }
+        });
+    }
+
+    createAnimations() {
+        if (!this.anims.exists('left')) {
+            this.anims.create({
+                key: 'left',
+                frames: this.anims.generateFrameNumbers('player', { start: 4, end: 5 }),
+                frameRate: 10,
+                repeat: -1
+            });
+        }
+        if (!this.anims.exists('turn')) {
+            this.anims.create({
+                key: 'turn',
+                frames: [{ key: 'player', frame: 0 }],
+                frameRate: 20
+            });
+        }
+        if (!this.anims.exists('right')) {
+            this.anims.create({
+                key: 'right',
+                frames: this.anims.generateFrameNumbers('player', { start: 2, end: 3 }),
+                frameRate: 10,
+                repeat: -1
+            });
+        }
     }
 
     update() {
@@ -129,29 +161,25 @@ class ApartmentHallwayScene extends Phaser.Scene {
         this.helpText.setVisible(false);
         this.dialogueBox.setVisible(false);
 
-        // Show problem text
         this.problemText.setText(
             "Oh, thank you! I've lost the key to my apartment and I'm locked out. Can you help me?"
         ).setVisible(true);
 
-        // After delay, hide text & launch DialogueScene
         this.time.delayedCall(2500, () => {
             this.problemText.setVisible(false);
-
-            console.log("Launching DialogueScene...");
             this.neighbor.dialogueState = 'BUSY';
 
             this.scene.launch("DialogueScene", {
                 message: "Oh, thank you! I've lost the key to my apartment and I'm locked out. Can you help me?",
                 options: [
-                    { text: "Look under the nearby potted plant and contiue help him." },
-                    { text: "Yes u can stay with come inside" },
-                    { text: "No u cant come inside i dont trust u " },
+                    { text: "Look under the nearby potted plant and continue helping him." },
+                    { text: "Yes, you can come inside." },
+                    { text: "No, I don’t trust you." },
                     { text: "Sorry, I can't help right now." }
                 ],
                 onChoice: (choiceIndex) => {
                     console.log("Player chose option", choiceIndex);
-                    this.scene.resume(); // Resume hallway scene
+                    this.scene.resume();
                     this.neighbor.dialogueState = 'IDLE';
                 }
             });
