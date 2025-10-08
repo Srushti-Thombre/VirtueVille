@@ -1,6 +1,6 @@
 import * as Phaser from "https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.esm.js";
 import LibraryScene from "../scenes/LibraryScene.js";
-import { traits, saveProgress } from "../state/traits.js";
+import { traits, saveProgress, markTaskCompleted } from "../state/traits.js";
 import GameScene from "./PocketScene.js";
 
 export default class SituationScene extends Phaser.Scene {
@@ -11,6 +11,8 @@ export default class SituationScene extends Phaser.Scene {
   init(data) {
     this.message = data.message;
     this.options = data.options;
+    this.taskId = data.taskId || "libraryTask"; // Add task ID
+    this.previousScene = data.previousScene || "LibraryScene"; // Add previous scene
   }
 
   create() {
@@ -64,16 +66,20 @@ export default class SituationScene extends Phaser.Scene {
         .on("pointerout", () => {
           optionText.setStyle({ color: "#00e6e6", backgroundColor: "#333355" });
         })
-        .on("pointerdown", () => {
+        .on("pointerdown", async () => {
           // Apply traits
           for (let t in opt.traits) {
             traits[t] = (traits[t] || 0) + opt.traits[t];
           }
-          saveProgress();
+          
+          // Mark this task as completed
+          await markTaskCompleted(this.taskId);
+          
+          await saveProgress();
 
-          // Close popup and resume library
+          // Close popup and resume previous scene
           this.scene.stop("SituationScene"); // stop popup scene
-          this.scene.resume("LibraryScene"); // resume gameplay
+          this.scene.resume(this.previousScene); // resume gameplay
         });
 
       y += 50;

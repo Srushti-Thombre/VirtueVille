@@ -4,6 +4,7 @@ import LibraryScene from "./scenes/LibraryScene.js";
 import SituationScene from "./scenes/SituationScene.js";
 import PocketScene from "./scenes/PocketScene.js";
 import SituationScene1 from "./scenes/SituationScene1.js";
+import { loadProgress } from "./state/traits.js";
 
 // Phaser game configuration
 const config = {
@@ -20,5 +21,11 @@ const config = {
   scene: [GameScene,LibraryScene,SituationScene,PocketScene,SituationScene1]
 };
 
-// Start the Phaser game immediately
-const game=new Phaser.Game(config);
+// Load saved progress and start the game
+async function initGame() {
+  await loadProgress();
+  const game = new Phaser.Game(config);
+}
+
+// Start the game
+initGame();

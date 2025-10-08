@@ -1,4 +1,5 @@
 import * as Phaser from "https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.esm.js";
+import { isTaskCompleted } from "../state/traits.js";
 
 export default class GameScene extends Phaser.Scene {
   constructor() {
@@ -95,9 +96,14 @@ export default class GameScene extends Phaser.Scene {
       .staticSprite(404, 294, null) // position = door location
       .setSize(40, 60) // size of the invisible door
       .setVisible(false); // keep hidden
-    // overlap check → switch to PocketScene
+    // overlap check → switch to PocketScene only if task not completed
     this.physics.add.overlap(this.player, this.PocketDoor, () => {
-      this.scene.start("PocketScene");
+      if (!isTaskCompleted('pocketTask')) {
+        this.scene.start("PocketScene");
+      } else {
+        // Show message that task is already completed
+        //this.showTaskCompletedMessage("You've already helped with the wallet situation.");
+      }
     });
   }
 
@@ -163,5 +169,23 @@ export default class GameScene extends Phaser.Scene {
     } else {
       this.player.anims.stop();
     }
+  }
+
+  showTaskCompletedMessage(message) {
+    // Create a temporary text display
+    const messageText = this.add.text(this.cameras.main.centerX, this.cameras.main.centerY - 50, message, {
+      fontSize: '20px',
+      color: '#ffff00',
+      backgroundColor: '#000000',
+      padding: { x: 20, y: 10 },
+      align: 'center'
+    }).setOrigin(0.5).setDepth(1000);
+
+    // Auto-remove after 3 seconds
+    this.time.delayedCall(3000, () => {
+      if (messageText) {
+        messageText.destroy();
+      }
+    });
   }
 }

@@ -1,4 +1,5 @@
 import * as Phaser from "https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.esm.js";
+import { isTaskCompleted } from "../state/traits.js";
 
 export default class GameScene extends Phaser.Scene {
   constructor() {
@@ -83,6 +84,7 @@ export default class GameScene extends Phaser.Scene {
               // Pause library scene + launch situation
               this.scene.pause();
               this.scene.launch("SituationScene1", {
+                taskId: "pocketTask",
                 message:
                   "While walking near the marketplace, you notice someone's pocket wallet has fallen on the ground.",
                 options: [
