@@ -99,6 +99,80 @@ export default class GameScene extends Phaser.Scene {
       this.scene.start("ApartmentHallwayScene");
     });
 
+    // --- cafeEntrance trigger logic ---
+    const cafeEntranceLayer = map.getObjectLayer("cafeEntrance");
+    if (cafeEntranceLayer) {
+      cafeEntranceLayer.objects.forEach((obj) => {
+        console.log("cafeEntrance object (raw):", obj.x, obj.y, obj.width, obj.height); // Debug raw data
+        const zoneY = obj.y + 30; // Increased offset to lower the zone further (adjust this value)
+        const zone = this.add.zone(obj.x, zoneY, obj.width || 64, obj.height || 64)
+          .setOrigin(0, 1) // Bottom-left origin
+          .setScale(1 / this.cameras.main.zoom); // Adjust for camera zoom
+        this.physics.world.enable(zone);
+        zone.body.setAllowGravity(false);
+        zone.body.setImmovable(true);
+        zone.entered = false;
+        this.physics.add.overlap(
+          this.player,
+          zone,
+          () => {
+            console.log("Player overlapping cafeEntrance at:", obj.x, zoneY); // Debug log
+            if (!zone.entered) {
+              zone.entered = true;
+              this.scene.start("CafeScene"); // Transition to CafeScene
+            }
+          },
+          null,
+          this
+        );
+        // Visualize zone for debugging (remove in production)
+        const debugGraphics = this.add.graphics().setAlpha(0.5);
+        debugGraphics.fillStyle(0xff0000, 0.5);
+        debugGraphics.fillRect(obj.x, zoneY - (obj.height || 64), obj.width || 64, obj.height || 64);
+        debugGraphics.setDepth(1000);
+        console.log("Zone position (bottom):", obj.x, zoneY, "Size:", obj.width || 64, obj.height || 64); // Debug final position
+      });
+    } else {
+      console.log("cafeEntrance layer not found in citymap"); // Debug if layer is missing
+    }
+
+    const gardenEntranceLayer = map.getObjectLayer("gardenEntrance");
+    if (gardenEntranceLayer) {
+      gardenEntranceLayer.objects.forEach((obj) => {
+        console.log("gardenEntrance object (raw):", obj.x, obj.y, obj.width, obj.height); // Debug raw data
+        const zoneY = obj.y + 30; // Increased offset to lower the zone further (adjust this value)
+        const zone = this.add.zone(obj.x, zoneY, obj.width || 64, obj.height || 64)
+          .setOrigin(0, 1) // Bottom-left origin
+          .setScale(1 / this.cameras.main.zoom); // Adjust for camera zoom
+        this.physics.world.enable(zone);
+        zone.body.setAllowGravity(false);
+        zone.body.setImmovable(true);
+        zone.entered = false;
+        this.physics.add.overlap(
+          this.player,
+          zone,
+          () => {
+            console.log("Player overlapping gardenEntrance at:", obj.x, zoneY); // Debug log
+            if (!zone.entered) {
+              zone.entered = true;
+              this.scene.start("GardenScene"); // Transition to CafeScene
+            }
+          },
+          null,
+          this
+        );
+        // Visualize zone for debugging (remove in production)
+        const debugGraphics = this.add.graphics().setAlpha(0.5);
+        debugGraphics.fillStyle(0xff0000, 0.5);
+        debugGraphics.fillRect(obj.x, zoneY - (obj.height || 64), obj.width || 64, obj.height || 64);
+        debugGraphics.setDepth(1000);
+        console.log("Zone position (bottom):", obj.x, zoneY, "Size:", obj.width || 64, obj.height || 64); // Debug final position
+      });
+    } else {
+      console.log("gardenEntrance layer not found in citymap"); // Debug if layer is missing
+    }
+
+
     // --- PARKING LOT SCENE SETUP ---
     this.setupParkingLotScene();
   }
@@ -228,78 +302,78 @@ export default class GameScene extends Phaser.Scene {
     });
   }
 
-showDialogueBox() {
-  const boxWidth = 400;
-  const boxHeight = 180;
-  const dialogX = this.cameras.main.width / 2;
-  const dialogY = this.cameras.main.height / 2;
-  const dialogueContainer = this.add.container(0, 0).setDepth(1000).setScrollFactor(0);
+  showDialogueBox() {
+    const boxWidth = 400;
+    const boxHeight = 180;
+    const dialogX = this.cameras.main.width / 2;
+    const dialogY = this.cameras.main.height / 2;
+    const dialogueContainer = this.add.container(0, 0).setDepth(1000).setScrollFactor(0);
 
-  // Enable input globally
-  this.input.enabled = true;
+    // Enable input globally
+    this.input.enabled = true;
 
-  // Create background graphics
-  const bg = this.add.rectangle(dialogX, dialogY, boxWidth, boxHeight, 0x000000, 0.8)
-    .setStrokeStyle(2, 0xffffff)
-    .setScrollFactor(0)
-    .setDepth(1000); // ensure on top
+    // Create background graphics
+    const bg = this.add.rectangle(dialogX, dialogY, boxWidth, boxHeight, 0x000000, 0.8)
+      .setStrokeStyle(2, 0xffffff)
+      .setScrollFactor(0)
+      .setDepth(1000); // ensure on top
 
-  const mainText = this.add.text(dialogX, dialogY - 60, "What should I do?", {
-    font: "16px monospace",
-    fill: "#ffffff",
-    wordWrap: { width: boxWidth - 40 },
-    align: "center",
-  })
-  .setOrigin(0.5)
-  .setScrollFactor(0)
-  .setDepth(1001);
-
-  // Options
-  const options = [
-    { text: "Call for help.", id: "help" },
-    { text: "Check on the girl.", id: "check" },
-    { text: "Confront the man.", id: "confront" },
-    { text: "Do nothing.", id: "nothing" }
-  ];
-
-  let yOffset = dialogY - 20;
-const optionTexts = [];
-  options.forEach((opt, i) => {
-    const optionText = this.add.text(dialogX, yOffset + i * 25, opt.text, {
-      font: "14px monospace",
-      fill: "#00ff00"
+    const mainText = this.add.text(dialogX, dialogY - 60, "What should I do?", {
+      font: "16px monospace",
+      fill: "#ffffff",
+      wordWrap: { width: boxWidth - 40 },
+      align: "center",
     })
     .setOrigin(0.5)
     .setScrollFactor(0)
-    .setInteractive({ useHandCursor: true })
-    .setDepth(1002);
+    .setDepth(1001);
 
-    // hover effects
-    optionText.on('pointerover', () => optionText.setStyle({ fill: '#ffff00' }));
-    optionText.on('pointerout', () => optionText.setStyle({ fill: '#00ff00' }));
+    // Options
+    const options = [
+      { text: "Call for help.", id: "help" },
+      { text: "Check on the girl.", id: "check" },
+      { text: "Confront the man.", id: "confront" },
+      { text: "Do nothing.", id: "nothing" }
+    ];
 
-    // click event
-    optionText.on('pointerdown', () => {
-      console.log(`Option selected: ${opt.text}`);
-      this.saveChoice(opt.id);
-      bg.destroy();
-      mainText.destroy();
-      options.forEach(() => optionText.destroy());
-       dialogueContainer.destroy();
-      this.endParkingLotScene();
+    let yOffset = dialogY - 20;
+    const optionTexts = [];
+    options.forEach((opt, i) => {
+      const optionText = this.add.text(dialogX, yOffset + i * 25, opt.text, {
+        font: "14px monospace",
+        fill: "#00ff00"
+      })
+      .setOrigin(0.5)
+      .setScrollFactor(0)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(1002);
+
+      // hover effects
+      optionText.on('pointerover', () => optionText.setStyle({ fill: '#ffff00' }));
+      optionText.on('pointerout', () => optionText.setStyle({ fill: '#00ff00' }));
+
+      // click event
+      optionText.on('pointerdown', () => {
+        console.log(`Option selected: ${opt.text}`);
+        this.saveChoice(opt.id);
+        bg.destroy();
+        mainText.destroy();
+        options.forEach(() => optionText.destroy());
+        dialogueContainer.destroy();
+        this.endParkingLotScene();
+      });
     });
-  });
 
-  // Bring everything to top
-  this.children.bringToTop(bg);
-  this.children.bringToTop(mainText);
-}
+    // Bring everything to top
+    this.children.bringToTop(bg);
+    this.children.bringToTop(mainText);
+  }
 
-saveChoice(choiceId) {
+  saveChoice(choiceId) {
     console.log("Saving choice:", choiceId);
 
-  this.selectedChoice = choiceId;
-}
+    this.selectedChoice = choiceId;
+  }
 
   endParkingLotScene() {
     // Hide the NPCs and car
@@ -368,4 +442,3 @@ saveChoice(choiceId) {
     });
   }
 }
-

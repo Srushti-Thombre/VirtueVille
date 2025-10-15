@@ -9,6 +9,8 @@ import { loadProgress } from "./state/traits.js";
 import UIScene from "./scenes/UIScene.js"; 
 import ApartmentHallwayScene from "./scenes/ApartmentHallwayScene.js";
 import DialogueScene from "./scenes/DialogueScene.js";
+import cafeScene from "./scenes/CafeScene.js";
+import GardenScene from "./scenes/GardenScene.js";
 
 // Phaser game configuration
 const config = {
@@ -30,7 +32,9 @@ const config = {
         SituationScene1,
         UIScene, 
         ApartmentHallwayScene,
-        DialogueScene 
+        DialogueScene,
+        cafeScene,
+        GardenScene
     ]
 };
 
