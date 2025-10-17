@@ -1,5 +1,6 @@
 import * as Phaser from "https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.esm.js";
 import { traits, saveProgress } from "../state/traits.js";
+import { VirtueSystem } from "../state/VirtueSystem.js";
 
 export default class LibraryScene extends Phaser.Scene {
   constructor() {
@@ -19,10 +20,9 @@ export default class LibraryScene extends Phaser.Scene {
   }
 
   create() {
-    // Example background
-    //this.add.image(400, 300, "LibraryMap").setScale(1);
-    //this.startX = 450; // X coordinate to spawn player inside library
-    //this.startY = 300; // Y coordinate to spawn player inside library
+    // Initialize virtue points system
+    VirtueSystem.initScene(this);
+    
     this.cursors = this.input.keyboard.createCursorKeys();
 
     // --- map layers ---
@@ -54,6 +54,15 @@ export default class LibraryScene extends Phaser.Scene {
     //this.player = this.physics.add.sprite(this.startX, this.startY, 'player');
     this.cameras.main.startFollow(this.player, true, 0.08, 0.08);
     this.player.setCollideWorldBounds(true);
+    // Provide minimap bounds so the MinimapScene can map world coordinates
+    try {
+      this.registry.set('minimapBounds', {
+        worldWidth: map.widthInPixels,
+        worldHeight: map.heightInPixels
+      });
+    } catch (e) {
+      console.warn('Unable to set minimapBounds in LibraryScene:', e);
+    }
     // --- object layer ---
     const loginLayer = map.getObjectLayer("login");
 
@@ -85,19 +94,23 @@ export default class LibraryScene extends Phaser.Scene {
                 options: [
                   {
                     text: "Log out quietly",
-                    traits: { empathy: 2, responsibility: 2 },
+                    points: 10,
+                    reason: "Being responsible and protecting someone's privacy"
                   },
                   {
                     text: "Ignore and walk away",
-                    traits: { fear: 1, selfishness: 1 },
+                    points: -5,
+                    reason: "Ignoring potential security risks"
                   },
                   {
                     text: "Misuse their account",
-                    traits: { selfishness: 3, dishonesty: 2 },
+                    points: -15,
+                    reason: "Deliberately violating someone's privacy"
                   },
                   {
                     text: "Inform the librarian",
-                    traits: { responsibility: 3, courage: 1 },
+                    points: 15,
+                    reason: "Taking responsible action to protect someone's account",
                   },
                 ],
               });
@@ -212,5 +225,9 @@ export default class LibraryScene extends Phaser.Scene {
     } else {
       this.player.anims.stop();
     }
+    // update player position for the minimap
+    try {
+      this.registry.set('playerPos', { x: this.player.x, y: this.player.y });
+    } catch (e) {}
   }
 }

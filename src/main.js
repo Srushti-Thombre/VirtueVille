@@ -1,15 +1,19 @@
 
 
 import * as Phaser from "https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.esm.js";
+
+
 import GameScene from './scenes/GameScene.js';
 import LibraryScene from "./scenes/LibraryScene.js";
 import SituationScene from "./scenes/SituationScene.js";
 import PocketScene from "./scenes/PocketScene.js";
 import SituationScene1 from "./scenes/SituationScene1.js";
-import UIScene from "./scenes/UIScene.js"; 
+import UIScene1 from "./scenes/UIScene1.js"; 
 import ApartmentHallwayScene from "./scenes/ApartmentHallwayScene.js";
-import DialogueScene from "./scenes/DialogueScene.js"; // ---> ADD THIS IMPORT
+import DialogueScene from "./scenes/DialogueScene.js"; // 
 
+//import MusicScene from "./scenes/MusicScene.js";
+//import UIScene from "./scenes/UIScene.js";
 // Phaser game configuration
 const config = {
     type: Phaser.AUTO,
@@ -22,14 +26,16 @@ const config = {
         default: 'arcade',
         arcade: { gravity: { y: 0 }, debug: false }
     },
-    // ---> ADD THE MISSING SCENES TO THIS ARRAY
+    // 
     scene: [
+         
         GameScene,
+        UIScene1,
+        
         LibraryScene,
         SituationScene,
         PocketScene,
         SituationScene1,
-        UIScene, 
         ApartmentHallwayScene,
         DialogueScene 
     ]
@@ -37,3 +43,4 @@ const config = {
 
 // Start the Phaser game immediately
 const game = new Phaser.Game(config);
+game.registry.set('score', 0);

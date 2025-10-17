@@ -1,4 +1,5 @@
 import * as Phaser from "https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.esm.js";
+import { VirtueSystem } from "../state/VirtueSystem.js";
 
 export default class GameScene extends Phaser.Scene {
   constructor() {
@@ -20,6 +21,9 @@ export default class GameScene extends Phaser.Scene {
   }
 
   create() {
+    // Initialize virtue points system
+    VirtueSystem.initScene(this);
+    
     // --- map layers ---
     const map = this.make.tilemap({ key: "pocketmap" });
     const sampleTileset = map.addTilesetImage("Sample", "Sample");
@@ -31,6 +35,16 @@ export default class GameScene extends Phaser.Scene {
     const objects = map.createLayer("pocket", tilesets, 0, 0);
     const objects1 = map.createLayer("exit", tilesets, 0, 0);
     walls.setCollisionByExclusion([-1]);
+
+    // Provide minimap bounds to the MinimapScene so it can map world -> minimap coordinates
+    try {
+      this.registry.set('minimapBounds', {
+        worldWidth: map.widthInPixels,
+        worldHeight: map.heightInPixels
+      });
+    } catch (e) {
+      console.warn('Unable to set minimapBounds registry key in PocketScene:', e);
+    }
 
     
 
@@ -88,11 +102,13 @@ export default class GameScene extends Phaser.Scene {
                 options: [
                   {
                     text: "Pick up the wallet and return it to the person immediately",
-                    traits: { empathy: 2, honesty: 3 },
+                    points: 15,
+                    reason: "Showing honesty and kindness by returning the wallet"
                   },
                   {
                     text: "Pick it up but keep the money, then return only the empty wallet",
-                    traits: { selfishness: 3, dishonesty: 2 },
+                    points: -10,
+                    reason: "Being dishonest and stealing money",
                   },
                   {
                     text: "Ignore the wallet and walk away",
@@ -216,6 +232,12 @@ export default class GameScene extends Phaser.Scene {
       else if (body.velocity.x < 0) this.player.anims.play("walk-left", true);
     } else {
       this.player.anims.stop();
+    }
+    // Update global player position for the minimap every frame
+    try {
+      this.registry.set('playerPos', { x: this.player.x, y: this.player.y });
+    } catch (e) {
+      // ignore
     }
   }
 }
