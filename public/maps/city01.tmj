@@ -55,6 +55,28 @@
         }, 
         {
          "draworder":"topdown",
+         "id":5,
+         "name":"cafeEntrance",
+         "objects":[
+                {
+                 "height":36,
+                 "id":10,
+                 "name":"cafeEntrance",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":46,
+                 "x":289,
+                 "y":66
+                }],
+         "opacity":1,
+         "type":"objectgroup",
+         "visible":true,
+         "x":0,
+         "y":0
+        }, 
+        {
+         "draworder":"topdown",
          "id":3,
          "name":"library",
          "objects":[
@@ -164,9 +186,31 @@
          "width":60,
          "x":0,
          "y":0
+        }, 
+        {
+         "draworder":"topdown",
+         "id":7,
+         "name":"gardenEntrance",
+         "objects":[
+                {
+                 "height":32,
+                 "id":11,
+                 "name":"gardenEntrance",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":32,
+                 "x":544,
+                 "y":465
+                }],
+         "opacity":1,
+         "type":"objectgroup",
+         "visible":true,
+         "x":0,
+         "y":0
         }],
- "nextlayerid":5,
- "nextobjectid":8,
+ "nextlayerid":8,
+ "nextobjectid":12,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.11.2",

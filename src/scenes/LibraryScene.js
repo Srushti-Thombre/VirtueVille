@@ -1,6 +1,7 @@
 import * as Phaser from "https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.esm.js";
 import { traits, saveProgress } from "../state/traits.js";
 import { VirtueSystem } from "../state/VirtueSystem.js";
+import { traits, saveProgress, isTaskCompleted } from "../state/traits.js";
 
 export default class LibraryScene extends Phaser.Scene {
   constructor() {
@@ -86,9 +87,17 @@ export default class LibraryScene extends Phaser.Scene {
               zone.triggered = true; // ✅ prevent retriggering
               console.log("Triggered login object at", obj.x, obj.y);
 
+              // Check if library task is already completed
+              if (isTaskCompleted('libraryTask')) {
+                // Show message that task is already completed
+                /*this.showTaskCompletedMessage("You've already handled the computer situation.");*/
+                return;
+              }
+
               // Pause library scene + launch situation
               this.scene.pause();
               this.scene.launch("SituationScene", {
+                taskId: "libraryTask",
                 message:
                   "In the library, you notice someone forgot to log out of their account on a public computer.",
                 options: [
@@ -229,5 +238,23 @@ export default class LibraryScene extends Phaser.Scene {
     try {
       this.registry.set('playerPos', { x: this.player.x, y: this.player.y });
     } catch (e) {}
+  }
+
+  showTaskCompletedMessage(message) {
+    // Create a temporary text display
+    const messageText = this.add.text(this.cameras.main.centerX, this.cameras.main.centerY - 50, message, {
+      fontSize: '20px',
+      color: '#ffff00',
+      backgroundColor: '#000000',
+      padding: { x: 20, y: 10 },
+      align: 'center'
+    }).setOrigin(0.5).setDepth(1000);
+
+    // Auto-remove after 3 seconds
+    this.time.delayedCall(3000, () => {
+      if (messageText) {
+        messageText.destroy();
+      }
+    });
   }
 }

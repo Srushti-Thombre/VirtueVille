@@ -52,7 +52,7 @@ const db = new sqlite3.Database('users.db', (err) => {
     });
 
 app.get('/', (req, res) => {
-    res.send('Welcome! Go to <a href="/auth.html">go to hell</a>');
+    res.redirect('/auth.html');
 });
 
 // Serve signup page
@@ -117,6 +117,24 @@ app.post('/login', (req, res) => {
         } else {
             res.status(401).send('Invalid username or password.');
         }
+    });
+});
+
+// API endpoint to get current user info
+app.get('/api/user', (req, res) => {
+    if (!req.session.user) {
+        return res.status(401).json({ error: 'Not logged in' });
+    }
+    res.json({ user: req.session.user });
+});
+
+// API endpoint to logout
+app.post('/api/logout', (req, res) => {
+    req.session.destroy((err) => {
+        if (err) {
+            return res.status(500).json({ error: 'Could not log out' });
+        }
+        res.json({ success: true });
     });
 });
 

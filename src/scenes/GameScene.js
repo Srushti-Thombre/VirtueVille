@@ -1,6 +1,7 @@
 import * as Phaser from "https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.esm.js";
 import { VirtueSystem } from "../state/VirtueSystem.js";
 import { minimapNodes } from "../ui/minimapConfig.js"; // This import is required!
+import { isTaskCompleted } from "../state/traits.js";
 
 export default class GameScene extends Phaser.Scene {
   constructor() {
@@ -60,12 +61,118 @@ export default class GameScene extends Phaser.Scene {
     this.createAnimations();
 
     // --- door triggers ---
-    this.libraryDoor = this.physics.add.staticSprite(425, 205, null).setSize(40, 60).setVisible(false);
-    this.physics.add.overlap(this.player, this.libraryDoor, () => { this.scene.start("LibraryScene"); });
-    this.PocketDoor = this.physics.add.staticSprite(404, 294, null).setSize(40, 60).setVisible(false);
-    this.physics.add.overlap(this.player, this.PocketDoor, () => { this.scene.start("PocketScene"); });
+    //this.libraryDoor = this.physics.add.staticSprite(425, 205, null).setSize(40, 60).setVisible(false);
+   // this.physics.add.overlap(this.player, this.libraryDoor, () => { this.scene.start("LibraryScene"); });
+    //this.PocketDoor = this.physics.add.staticSprite(404, 294, null).setSize(40, 60).setVisible(false);
+    //this.physics.add.overlap(this.player, this.PocketDoor, () => { this.scene.start("PocketScene"); });
     this.apartmentDoor = this.physics.add.staticSprite(637, 285, null).setSize(48, 32).setVisible(false);
     this.physics.add.overlap(this.player, this.apartmentDoor, () => { this.scene.start("ApartmentHallwayScene"); });
+    // --- existing doors (Library + Pocket) ---
+    this.libraryDoor = this.physics.add
+      .staticSprite(425, 205, null)
+      .setSize(40, 60)
+      .setVisible(false);
+    this.physics.add.overlap(this.player, this.libraryDoor, () => {
+      this.scene.start("LibraryScene");
+    });
+
+    this.PocketDoor = this.physics.add
+      .staticSprite(404, 294, null) // position = door location
+      .setSize(40, 60) // size of the invisible door
+      .setVisible(false); // keep hidden
+    // overlap check → switch to PocketScene only if task not completed
+    this.physics.add.overlap(this.player, this.PocketDoor, () => {
+      if (!isTaskCompleted('pocketTask')) {
+        this.scene.start("PocketScene");
+      } else {
+        // Show message that task is already completed
+        //this.showTaskCompletedMessage("You've already helped with the wallet situation.");
+      }
+    });
+
+    // --- ApartmentHallway door trigger ---
+    this.apartmentDoor = this.physics.add
+      .staticSprite(637, 285, null) // updated coordinates
+      .setSize(48, 32)
+      .setVisible(false);
+
+    this.physics.add.overlap(this.player, this.apartmentDoor, () => {
+      this.scene.start("ApartmentHallwayScene");
+    });
+
+    // --- cafeEntrance trigger logic ---
+    const cafeEntranceLayer = map.getObjectLayer("cafeEntrance");
+    if (cafeEntranceLayer) {
+      cafeEntranceLayer.objects.forEach((obj) => {
+        console.log("cafeEntrance object (raw):", obj.x, obj.y, obj.width, obj.height); // Debug raw data
+        const zoneY = obj.y + 30; // Increased offset to lower the zone further (adjust this value)
+        const zone = this.add.zone(obj.x, zoneY, obj.width || 64, obj.height || 64)
+          .setOrigin(0, 1) // Bottom-left origin
+          .setScale(1 / this.cameras.main.zoom); // Adjust for camera zoom
+        this.physics.world.enable(zone);
+        zone.body.setAllowGravity(false);
+        zone.body.setImmovable(true);
+        zone.entered = false;
+        this.physics.add.overlap(
+          this.player,
+          zone,
+          () => {
+            console.log("Player overlapping cafeEntrance at:", obj.x, zoneY); // Debug log
+            if (!zone.entered) {
+              zone.entered = true;
+              this.scene.start("CafeScene"); // Transition to CafeScene
+            }
+          },
+          null,
+          this
+        );
+        // Visualize zone for debugging (remove in production)
+        const debugGraphics = this.add.graphics().setAlpha(0.5);
+        debugGraphics.fillStyle(0xff0000, 0.5);
+        debugGraphics.fillRect(obj.x, zoneY - (obj.height || 64), obj.width || 64, obj.height || 64);
+        debugGraphics.setDepth(1000);
+        console.log("Zone position (bottom):", obj.x, zoneY, "Size:", obj.width || 64, obj.height || 64); // Debug final position
+      });
+    } else {
+      console.log("cafeEntrance layer not found in citymap"); // Debug if layer is missing
+    }
+
+    const gardenEntranceLayer = map.getObjectLayer("gardenEntrance");
+    if (gardenEntranceLayer) {
+      gardenEntranceLayer.objects.forEach((obj) => {
+        console.log("gardenEntrance object (raw):", obj.x, obj.y, obj.width, obj.height); // Debug raw data
+        const zoneY = obj.y + 30; // Increased offset to lower the zone further (adjust this value)
+        const zone = this.add.zone(obj.x, zoneY, obj.width || 64, obj.height || 64)
+          .setOrigin(0, 1) // Bottom-left origin
+          .setScale(1 / this.cameras.main.zoom); // Adjust for camera zoom
+        this.physics.world.enable(zone);
+        zone.body.setAllowGravity(false);
+        zone.body.setImmovable(true);
+        zone.entered = false;
+        this.physics.add.overlap(
+          this.player,
+          zone,
+          () => {
+            console.log("Player overlapping gardenEntrance at:", obj.x, zoneY); // Debug log
+            if (!zone.entered) {
+              zone.entered = true;
+              this.scene.start("GardenScene"); // Transition to CafeScene
+            }
+          },
+          null,
+          this
+        );
+        // Visualize zone for debugging (remove in production)
+        const debugGraphics = this.add.graphics().setAlpha(0.5);
+        debugGraphics.fillStyle(0xff0000, 0.5);
+        debugGraphics.fillRect(obj.x, zoneY - (obj.height || 64), obj.width || 64, obj.height || 64);
+        debugGraphics.setDepth(1000);
+        console.log("Zone position (bottom):", obj.x, zoneY, "Size:", obj.width || 64, obj.height || 64); // Debug final position
+      });
+    } else {
+      console.log("gardenEntrance layer not found in citymap"); // Debug if layer is missing
+    }
+
 
     // --- PARKING LOT SCENE SETUP ---
     this.setupParkingLotScene();
@@ -140,21 +247,43 @@ export default class GameScene extends Phaser.Scene {
     
     const uiObjects = [];
 
+    //const bg = this.add.rectangle(dialogX, dialogY, boxWidth, boxHeight, 0x000000, 0.8)
+     // .setStrokeStyle(2, 0xffffff)
+     // .setScrollFactor(0)
+     // .setDepth(5000);
+   // uiObjects.push(bg);
+
+    //const mainText = this.add.text(dialogX, dialogY - 60, "What should I do?", {
+    //  font: "16px monospace", fill: "#ffffff",
+    //  wordWrap: { width: boxWidth - 40 }, align: "center",
+   // })
+  //  .setOrigin(0.5)
+   // .setScrollFactor(0)
+    //.setDepth(5001);
+    //uiObjects.push(mainText);
+
+    const dialogueContainer = this.add.container(0, 0).setDepth(1000).setScrollFactor(0);
+
+    // Enable input globally
+    this.input.enabled = true;
+
+    // Create background graphics
     const bg = this.add.rectangle(dialogX, dialogY, boxWidth, boxHeight, 0x000000, 0.8)
       .setStrokeStyle(2, 0xffffff)
       .setScrollFactor(0)
-      .setDepth(5000);
-    uiObjects.push(bg);
+      .setDepth(1000); // ensure on top
 
     const mainText = this.add.text(dialogX, dialogY - 60, "What should I do?", {
-      font: "16px monospace", fill: "#ffffff",
-      wordWrap: { width: boxWidth - 40 }, align: "center",
+      font: "16px monospace",
+      fill: "#ffffff",
+      wordWrap: { width: boxWidth - 40 },
+      align: "center",
     })
     .setOrigin(0.5)
     .setScrollFactor(0)
-    .setDepth(5001);
-    uiObjects.push(mainText);
+    .setDepth(1001);
 
+    // Options
     const options = [
       { text: "Call for help.", id: "help" },
       { text: "Check on the girl.", id: "check" },
@@ -164,27 +293,41 @@ export default class GameScene extends Phaser.Scene {
 
     options.forEach((opt, i) => {
       const optionText = this.add.text(dialogX, (dialogY - 20) + i * 25, opt.text, {
-        font: "14px monospace", fill: "#00ff00"
-      })
+        font: "14px monospace", fill: "#00ff00"})
+        /*let yOffset = dialogY - 20;
+        const optionTexts = [];
+    options.forEach((opt, i) => {
+      const optionText = this.add.text(dialogX, yOffset + i * 25, opt.text, {
+        font: "14px monospace",
+        fill: "#00ff00"
+      })*/
       .setOrigin(0.5)
       .setScrollFactor(0)
       .setInteractive({ useHandCursor: true })
-      .setDepth(5002);
-      
-      uiObjects.push(optionText);
+      .setDepth(1002);
 
+      // hover effects
       optionText.on('pointerover', () => optionText.setStyle({ fill: '#ffff00' }));
       optionText.on('pointerout', () => optionText.setStyle({ fill: '#00ff00' }));
-      
+
+      // click event
       optionText.on('pointerdown', () => {
-        this.saveChoice(opt.id);
-        uiObjects.forEach(obj => obj.destroy());
+        console.log(`Option selected: ${opt.text}`);
+        //this.saveChoice(opt.id);
+        bg.destroy();
+        mainText.destroy();
+        options.forEach(() => optionText.destroy());
+        dialogueContainer.destroy();
         this.endParkingLotScene();
       });
     });
+
+    // Bring everything to top
+    this.children.bringToTop(bg);
+    this.children.bringToTop(mainText);
   }
 
-  saveChoice(choiceId) {
+  /*saveChoice(choiceId) {
     console.log("Saving choice:", choiceId);
     this.selectedChoice = choiceId;
 
@@ -211,7 +354,8 @@ export default class GameScene extends Phaser.Scene {
     }
     VirtueSystem.awardPoints(this, points, reason);
     console.log("Updated Virtue Points:", this.registry.get('score'));
-  }
+  }*/
+
 
   endParkingLotScene() {
     this.girl.setVisible(false);
@@ -317,5 +461,22 @@ export default class GameScene extends Phaser.Scene {
 
     // --- ✨ REMOVED the on-screen coordinate update logic ---
   }
-}
 
+  showTaskCompletedMessage(message) {
+    // Create a temporary text display
+    const messageText = this.add.text(this.cameras.main.centerX, this.cameras.main.centerY - 50, message, {
+      fontSize: '20px',
+      color: '#ffff00',
+      backgroundColor: '#000000',
+      padding: { x: 20, y: 10 },
+      align: 'center'
+    }).setOrigin(0.5).setDepth(1000);
+
+    // Auto-remove after 3 seconds
+    this.time.delayedCall(3000, () => {
+      if (messageText) {
+        messageText.destroy();
+      }
+    });
+  }
+}

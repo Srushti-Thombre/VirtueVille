@@ -1,6 +1,8 @@
 import * as Phaser from "https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.esm.js";
 import { VirtueSystem } from "../state/VirtueSystem.js";
 import { traits, saveProgress } from "../state/traits.js";
+import LibraryScene from "../scenes/LibraryScene.js";
+import { traits, saveProgress, markTaskCompleted } from "../state/traits.js";
 import GameScene from "./PocketScene.js";
 
 export default class SituationScene extends Phaser.Scene {
@@ -12,6 +14,8 @@ export default class SituationScene extends Phaser.Scene {
     this.message = data.message;
     this.options = data.options;
     this.previousScene = data.previousScene || "LibraryScene";
+    this.taskId = data.taskId || "libraryTask"; // Add task ID
+    this.previousScene = data.previousScene || "LibraryScene"; // Add previous scene
   }
 
   create() {
@@ -95,6 +99,21 @@ export default class SituationScene extends Phaser.Scene {
             // Close this popup
             this.scene.stop("SituationScene");
           });
+        on("pointerdown", async () => {
+          // Apply traits
+          for (let t in opt.traits) {
+            traits[t] = (traits[t] || 0) + opt.traits[t];
+          }
+          
+          // Mark this task as completed
+          await markTaskCompleted(this.taskId);
+          
+          await saveProgress();
+
+          // Close popup and resume previous scene
+          this.scene.stop("SituationScene"); // stop popup scene
+          this.scene.resume(this.previousScene); // resume gameplay
+        });
 
       y += 50;
     });

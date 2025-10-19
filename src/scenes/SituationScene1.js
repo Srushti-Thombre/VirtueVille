@@ -1,6 +1,6 @@
 import * as Phaser from "https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.esm.js";
 import LibraryScene from "../scenes/LibraryScene.js";
-import { traits, saveProgress } from "../state/traits.js";
+import { traits, saveProgress, markTaskCompleted } from "../state/traits.js";
 import GameScene from "./GameScene.js";
 import { VirtueSystem } from "../state/VirtueSystem.js";
 
@@ -12,6 +12,7 @@ export default class SituationScene1 extends Phaser.Scene {
   init(data) {
     this.message = data.message;
     this.options = data.options;
+    this.taskId = data.taskId || "pocketTask"; // Default task ID
   }
 
   create() {
@@ -68,7 +69,7 @@ export default class SituationScene1 extends Phaser.Scene {
         .on("pointerout", () => {
           optionText.setStyle({ color: "#00e6e6", backgroundColor: "#333355" });
         })
-        .on("pointerdown", () => {
+        .on("pointerdown", async () => {
           console.log('SituationScene1: option selected ->', opt);
 
           // Apply traits if present
@@ -76,18 +77,21 @@ export default class SituationScene1 extends Phaser.Scene {
             for (let t in opt.traits) {
               traits[t] = (traits[t] || 0) + opt.traits[t];
             }
-            saveProgress();
+            await saveProgress();
           }
+
+          // Mark this task as completed
+          await markTaskCompleted(this.taskId);
 
           // Award virtue points if defined
-          if (typeof opt.points !== 'undefined') {
+          if (typeof opt.points !== "undefined") {
             console.log(`SituationScene1: awarding ${opt.points} points for reason: ${opt.reason}`);
-            VirtueSystem.awardPoints(this, opt.points, opt.reason || 'Choice made');
+            VirtueSystem.awardPoints(this, opt.points, opt.reason || "Choice made");
           }
 
-          // Close popup and resume pocket scene
-          this.scene.stop("SituationScene1"); // stop popup scene
-          this.scene.resume("PocketScene"); // resume gameplay
+          // Close popup and resume PocketScene
+          this.scene.stop("SituationScene1"); // stop popup
+          this.scene.resume("PocketScene");   // resume main gameplay
         });
 
       y += 50;
