@@ -19,10 +19,16 @@ export default class CafeScene extends Phaser.Scene {
     console.log("Preloading CafeScene assets...");
     this.load.tilemapTiledJSON("cafe", "public/maps/cafe.tmj");
     this.load.image("cafe_tileset", "public/tilesets/cafe_tileset.png");
-    this.load.image("soldier_tilesheet", "public/tilesets/soldier_tilesheet.png");
+    this.load.image(
+      "soldier_tilesheet",
+      "public/tilesets/soldier_tilesheet.png"
+    );
     this.load.image("player_tilesheet", "public/tilesets/player_tilesheet.png");
     this.load.image("female_tilesheet", "public/tilesets/female_tilesheet.png");
-    this.load.image("adventurer_tilesheet", "public/tilesets/adventurer_tilesheet.png");
+    this.load.image(
+      "adventurer_tilesheet",
+      "public/tilesets/adventurer_tilesheet.png"
+    );
 
     this.load.spritesheet(
       "player",
@@ -52,13 +58,15 @@ export default class CafeScene extends Phaser.Scene {
       map.addTilesetImage("adventurer_tilesheet", "adventurer_tilesheet"),
     ];
 
-    map.createLayer("Non-Collide", tilesets, 0, 0);
+    const nonCollideLayer = map.createLayer("Non-Collide", tilesets, 0, 0);
     const collideLayer = map.createLayer("Collide", tilesets, 0, 0);
     if (collideLayer) collideLayer.setCollisionByExclusion([-1]);
-    map.createLayer("People", tilesets, 0, 0);
+    const peopleLayer = map.createLayer("People", tilesets, 0, 0);
 
     const playerSpawnLayer = map.getObjectLayer("playerSpawn");
-    const spawnObj = playerSpawnLayer.objects.find(o => o.name === "playerSpawn");
+    const spawnObj = playerSpawnLayer.objects.find(
+      (o) => o.name === "playerSpawn"
+    );
     this.player = this.physics.add
       .sprite(spawnObj.x, spawnObj.y, "player", 0)
       .setCollideWorldBounds(true);
@@ -66,7 +74,11 @@ export default class CafeScene extends Phaser.Scene {
 
     const tableX = map.widthInPixels - 180 - 48;
     const tableY = map.heightInPixels - 220 - 128;
-    this.barista = this.physics.add.staticSprite(tableX + 45, tableY + 5, "femaleAdventurer");
+    this.barista = this.physics.add.staticSprite(
+      tableX + 45,
+      tableY + 5,
+      "femaleAdventurer"
+    );
     this.man = this.physics.add.staticSprite(tableX, tableY, "malePerson");
     this.barista.setDisplaySize(60, 90);
     this.man.setDisplaySize(60, 90);
@@ -74,64 +86,97 @@ export default class CafeScene extends Phaser.Scene {
     this.man.setDepth(150);
 
     if (collideLayer) this.physics.add.collider(this.player, collideLayer);
-    this.cameras.main.startFollow(this.player);
+
+    // Enhanced camera follow
+    this.cameras.main.startFollow(this.player, true, 0.12, 0.12);
+    this.cameras.main.setRoundPixels(false);
     this.cameras.main.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
     this.physics.world.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
 
     this.cursors = this.input.keyboard.createCursorKeys();
-    this.interactKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+    this.interactKey = this.input.keyboard.addKey(
+      Phaser.Input.Keyboard.KeyCodes.SPACE
+    );
 
     this.createPlayerAnimations();
 
     this.dialogue = [
-      { speaker: "Man", text: "I come here every single morning! I just forgot my wallet today." },
-      { speaker: "Barista", text: "I’m really sorry, sir, but I can’t give anything without payment." },
-      { speaker: "Man", text: "You’ve seen me here before! I’m not making it up." },
-      { speaker: "Barista", text: "Even if you are a regular, rules are rules." },
+      {
+        speaker: "Man",
+        text: "I come here every single morning! I just forgot my wallet today.",
+      },
+      {
+        speaker: "Barista",
+        text: "I’m really sorry, sir, but I can’t give anything without payment.",
+      },
+      {
+        speaker: "Man",
+        text: "You’ve seen me here before! I’m not making it up.",
+      },
+      {
+        speaker: "Barista",
+        text: "Even if you are a regular, rules are rules.",
+      },
     ];
 
     this.dialogueBoxes = {};
     this.dialogueTexts = {};
 
     this.quizBox = this.add.graphics().setDepth(999).setScrollFactor(0);
-    this.quizText = this.add.text(0, 0, '', {
-      fontSize: '18px',
-      fill: '#000',
-      wordWrap: { width: 320, useAdvancedWrap: true },
-      lineSpacing: 4
-    }).setScrollFactor(0).setDepth(1000).setVisible(false);
+    this.quizText = this.add
+      .text(0, 0, "", {
+        fontSize: "18px",
+        fill: "#000",
+        wordWrap: { width: 320, useAdvancedWrap: true },
+        lineSpacing: 4,
+      })
+      .setScrollFactor(0)
+      .setDepth(1000)
+      .setVisible(false);
 
     this.quizOptions = [
       "A. Step forward and pay for the man’s drink quietly, without making a scene.",
       "B. Tell the barista to make an exception — “He’s a regular! Don’t be so heartless.”",
       "C. You give the man a reassuring smile, letting him know someone believes him — even if you can’t help more.",
-      "D. Ignore the argument; it’s none of your business."
+      "D. Ignore the argument; it’s none of your business.",
     ];
 
     const exitLayer = map.getObjectLayer("exit");
-    const exitObj = exitLayer?.objects?.find(o => o.name === "exit");
+    const exitObj = exitLayer?.objects?.find((o) => o.name === "exit");
     if (exitObj) {
-      this.exitZone = this.physics.add.staticImage(exitObj.x, exitObj.y, null).setVisible(false);
-      this.physics.add.overlap(this.player, this.exitZone, () => this.scene.start("GameScene"));
+      this.exitZone = this.physics.add
+        .staticImage(exitObj.x, exitObj.y, null)
+        .setVisible(false);
+      this.physics.add.overlap(this.player, this.exitZone, () =>
+        this.scene.start("GameScene")
+      );
     }
 
     const triggerLayer = map.getObjectLayer("trigger");
     if (triggerLayer) {
       triggerLayer.objects.forEach((obj) => {
-        const zone = this.add.zone(obj.x, obj.y, obj.width || 32, obj.height || 32).setOrigin(0, 1);
+        const zone = this.add
+          .zone(obj.x, obj.y, obj.width || 32, obj.height || 32)
+          .setOrigin(0, 1);
         this.physics.world.enable(zone);
         zone.body.setAllowGravity(false);
         zone.body.setImmovable(true);
         zone.triggered = false;
-        this.physics.add.overlap(this.player, zone, () => {
-          if (!zone.triggered && !this.dialogOpen && !this.quizActive) {
-            zone.triggered = true;
-            this.interactionTriggered = true;
-            this.dialogOpen = true;
-            this.dialogueIndex = 0;
-            this.showNextDialogue();
-          }
-        }, null, this);
+        this.physics.add.overlap(
+          this.player,
+          zone,
+          () => {
+            if (!zone.triggered && !this.dialogOpen && !this.quizActive) {
+              zone.triggered = true;
+              this.interactionTriggered = true;
+              this.dialogOpen = true;
+              this.dialogueIndex = 0;
+              this.showNextDialogue();
+            }
+          },
+          null,
+          this
+        );
       });
     }
 
@@ -143,25 +188,25 @@ export default class CafeScene extends Phaser.Scene {
       key: "left",
       frames: this.anims.generateFrameNumbers("player", { start: 16, end: 18 }),
       frameRate: 10,
-      repeat: -1
+      repeat: -1,
     });
     this.anims.create({
       key: "right",
       frames: this.anims.generateFrameNumbers("player", { start: 19, end: 21 }),
       frameRate: 10,
-      repeat: -1
+      repeat: -1,
     });
     this.anims.create({
       key: "up",
       frames: this.anims.generateFrameNumbers("player", { start: 22, end: 23 }),
       frameRate: 10,
-      repeat: -1
+      repeat: -1,
     });
     this.anims.create({
       key: "down",
       frames: this.anims.generateFrameNumbers("player", { start: 22, end: 23 }),
       frameRate: 10,
-      repeat: -1
+      repeat: -1,
     });
   }
 
@@ -198,16 +243,21 @@ export default class CafeScene extends Phaser.Scene {
     if (this.dialogueIndex < this.dialogue.length) {
       const line = this.dialogue[this.dialogueIndex];
       const sp = line.speaker === "Man" ? this.man : this.barista;
-      const boxWidth = 300, boxHeight = 110;
-      const boxX = sp.x - boxWidth / 2, boxY = sp.y - 130;
+      const boxWidth = 300,
+        boxHeight = 110;
+      const boxX = sp.x - boxWidth / 2,
+        boxY = sp.y - 130;
 
       if (!this.dialogueBoxes[line.speaker]) {
         this.dialogueBoxes[line.speaker] = this.add.graphics().setDepth(1000);
-        this.dialogueTexts[line.speaker] = this.add.text(boxX + 14, boxY + 12, '', {
-          fontSize: '16px', fill: '#000',
-          wordWrap: { width: boxWidth - 28, useAdvancedWrap: true },
-          lineSpacing: 4
-        }).setDepth(1001);
+        this.dialogueTexts[line.speaker] = this.add
+          .text(boxX + 14, boxY + 12, "", {
+            fontSize: "16px",
+            fill: "#000",
+            wordWrap: { width: boxWidth - 28, useAdvancedWrap: true },
+            lineSpacing: 4,
+          })
+          .setDepth(1001);
       } else this.dialogueTexts[line.speaker].setPosition(boxX + 14, boxY + 12);
 
       const g = this.dialogueBoxes[line.speaker];
@@ -217,12 +267,24 @@ export default class CafeScene extends Phaser.Scene {
       g.fillRoundedRect(boxX, boxY, boxWidth, boxHeight, 12);
       g.lineStyle(2, 0x000000, 1);
       g.strokeRoundedRect(boxX, boxY, boxWidth, boxHeight, 12);
-      g.fillTriangle(boxX + boxWidth/2 - 10, boxY + boxHeight, boxX + boxWidth/2 + 10, boxY + boxHeight, boxX + boxWidth/2, boxY + boxHeight + 12);
+      g.fillTriangle(
+        boxX + boxWidth / 2 - 10,
+        boxY + boxHeight,
+        boxX + boxWidth / 2 + 10,
+        boxY + boxHeight,
+        boxX + boxWidth / 2,
+        boxY + boxHeight + 12
+      );
       t.setText(`${line.speaker}: ${line.text}`).setVisible(true);
 
       this.dialogueIndex++;
       if (this.dialogueTimer) this.dialogueTimer.remove(false);
-      this.dialogueTimer = this.time.delayedCall(4200, this.showNextDialogue, [], this);
+      this.dialogueTimer = this.time.delayedCall(
+        4200,
+        this.showNextDialogue,
+        [],
+        this
+      );
     } else {
       for (let s in this.dialogueBoxes) {
         this.dialogueBoxes[s].clear();
@@ -239,9 +301,12 @@ export default class CafeScene extends Phaser.Scene {
     this.quizActive = true;
 
     const cam = this.cameras.main;
-    const boxWidth = 420, boxHeight = 340;
-    const centerX = cam.width / 2, centerY = cam.height / 2;
-    const boxX = centerX - boxWidth / 2, boxY = centerY - boxHeight / 2 + 20;
+    const boxWidth = 420,
+      boxHeight = 340;
+    const centerX = cam.width / 2,
+      centerY = cam.height / 2;
+    const boxX = centerX - boxWidth / 2,
+      boxY = centerY - boxHeight / 2 + 20;
 
     this.quizBox.clear();
     this.quizBox.fillStyle(0xffffff, 1);
@@ -252,29 +317,34 @@ export default class CafeScene extends Phaser.Scene {
     this.quizText.setText("A man forgot his wallet. What do you do?");
     this.quizText.setVisible(true).setPosition(boxX + 30, boxY + 30);
 
-    if (this.optionTexts) this.optionTexts.forEach(o => o.destroy());
+    if (this.optionTexts) this.optionTexts.forEach((o) => o.destroy());
     this.optionTexts = [];
 
     let optionY = boxY + 100;
     const optionGap = 50;
     this.quizOptions.forEach((option, i) => {
-      const opt = this.add.text(boxX + 36, optionY, option, {
-        fontSize: '16px', fill: '#000',
-        wordWrap: { width: boxWidth - 80, useAdvancedWrap: true },
-        lineSpacing: 4
-      }).setInteractive({ useHandCursor: true })
+      const opt = this.add
+        .text(boxX + 36, optionY, option, {
+          fontSize: "16px",
+          fill: "#000",
+          wordWrap: { width: boxWidth - 80, useAdvancedWrap: true },
+          lineSpacing: 4,
+        })
+        .setInteractive({ useHandCursor: true })
         .setDepth(1001)
         .setScrollFactor(0);
 
-      opt.on('pointerdown', () => this.handleQuizSelection({ key: String.fromCharCode(65 + i) }));
+      opt.on("pointerdown", () =>
+        this.handleQuizSelection({ key: String.fromCharCode(65 + i) })
+      );
       this.optionTexts.push(opt);
       optionY += optionGap;
     });
 
     this.children.bringToTop(this.quizBox);
     this.children.bringToTop(this.quizText);
-    this.optionTexts.forEach(o => this.children.bringToTop(o));
-    this.input.keyboard.once('keydown', this.handleQuizSelection, this);
+    this.optionTexts.forEach((o) => this.children.bringToTop(o));
+    this.input.keyboard.once("keydown", this.handleQuizSelection, this);
   }
 
   handleQuizSelection(event) {
@@ -284,12 +354,14 @@ export default class CafeScene extends Phaser.Scene {
     this.selectedOption = key;
     this.quizActive = false;
 
-    if (this.optionTexts) this.optionTexts.forEach(o => o.destroy());
+    if (this.optionTexts) this.optionTexts.forEach((o) => o.destroy());
     this.optionTexts = [];
 
     const cam = this.cameras.main;
-    const boxWidth = 380, boxHeight = 84;
-    const boxX = cam.width/2 - boxWidth/2, boxY = cam.height/2 - boxHeight/2;
+    const boxWidth = 380,
+      boxHeight = 84;
+    const boxX = cam.width / 2 - boxWidth / 2,
+      boxY = cam.height / 2 - boxHeight / 2;
 
     this.quizBox.clear();
     this.quizBox.fillStyle(0xffffff, 1);
@@ -297,8 +369,13 @@ export default class CafeScene extends Phaser.Scene {
     this.quizBox.lineStyle(2, 0x000000, 1);
     this.quizBox.strokeRoundedRect(boxX, boxY, boxWidth, boxHeight, 12);
 
-    this.quizText.setText(`You chose: ${this.quizOptions[index]}`)
-      .setStyle({ fontSize: '16px', fill: '#000', wordWrap: { width: boxWidth - 40 } })
+    this.quizText
+      .setText(`You chose: ${this.quizOptions[index]}`)
+      .setStyle({
+        fontSize: "16px",
+        fill: "#000",
+        wordWrap: { width: boxWidth - 40 },
+      })
       .setPosition(boxX + 16, boxY + 14)
       .setVisible(true);
 
@@ -310,7 +387,7 @@ export default class CafeScene extends Phaser.Scene {
     this.quizText.setVisible(false);
 
     const exitLayer = this.map.getObjectLayer("exit");
-    const exitObj = exitLayer?.objects?.find(o => o.name === "exit");
+    const exitObj = exitLayer?.objects?.find((o) => o.name === "exit");
     if (!exitObj) return;
 
     this.tweens.add({
@@ -318,7 +395,11 @@ export default class CafeScene extends Phaser.Scene {
       x: exitObj.x,
       y: exitObj.y,
       duration: 2000,
-      onComplete: () => { try { this.man.destroy(); } catch {} }
+      onComplete: () => {
+        try {
+          this.man.destroy();
+        } catch {}
+      },
     });
   }
 }

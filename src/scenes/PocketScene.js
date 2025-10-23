@@ -24,7 +24,7 @@ export default class GameScene extends Phaser.Scene {
   create() {
     // Initialize virtue points system
     VirtueSystem.initScene(this);
-    
+
     // --- map layers ---
     const map = this.make.tilemap({ key: "pocketmap" });
     const sampleTileset = map.addTilesetImage("Sample", "Sample");
@@ -39,15 +39,16 @@ export default class GameScene extends Phaser.Scene {
 
     // Provide minimap bounds to the MinimapScene so it can map world -> minimap coordinates
     try {
-      this.registry.set('minimapBounds', {
+      this.registry.set("minimapBounds", {
         worldWidth: map.widthInPixels,
-        worldHeight: map.heightInPixels
+        worldHeight: map.heightInPixels,
       });
     } catch (e) {
-      console.warn('Unable to set minimapBounds registry key in PocketScene:', e);
+      console.warn(
+        "Unable to set minimapBounds registry key in PocketScene:",
+        e
+      );
     }
-
-    
 
     // --- input ---
     this.cursors = this.input.keyboard.createCursorKeys();
@@ -58,12 +59,16 @@ export default class GameScene extends Phaser.Scene {
       this.player.width * 0.2,
       this.player.height * 0.2
     );
+
     this.physics.add.collider(this.player, walls);
     //this.physics.add.collider(this.player, furnitures);
     //this.physics.add.collider(this.player, props);
     // Spawn player inside library
     //this.player = this.physics.add.sprite(this.startX, this.startY, 'player');
-    this.cameras.main.startFollow(this.player, true, 0.08, 0.08);
+
+    // Enhanced camera follow
+    this.cameras.main.startFollow(this.player, true, 0.12, 0.12);
+    this.cameras.main.setRoundPixels(false);
     this.player.setCollideWorldBounds(true);
 
     // --- animations ---
@@ -105,7 +110,8 @@ export default class GameScene extends Phaser.Scene {
                   {
                     text: "Pick up the wallet and return it to the person immediately",
                     points: 15,
-                    reason: "Showing honesty and kindness by returning the wallet"
+                    reason:
+                      "Showing honesty and kindness by returning the wallet",
                   },
                   {
                     text: "Pick it up but keep the money, then return only the empty wallet",
@@ -237,7 +243,7 @@ export default class GameScene extends Phaser.Scene {
     }
     // Update global player position for the minimap every frame
     try {
-      this.registry.set('playerPos', { x: this.player.x, y: this.player.y });
+      this.registry.set("playerPos", { x: this.player.x, y: this.player.y });
     } catch (e) {
       // ignore
     }

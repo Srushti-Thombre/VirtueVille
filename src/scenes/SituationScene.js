@@ -1,8 +1,7 @@
 import * as Phaser from "https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.esm.js";
 import { VirtueSystem } from "../state/VirtueSystem.js";
-import { traits, saveProgress } from "../state/traits.js";
-import LibraryScene from "../scenes/LibraryScene.js";
 import { traits, saveProgress, markTaskCompleted } from "../state/traits.js";
+import LibraryScene from "../scenes/LibraryScene.js";
 import GameScene from "./PocketScene.js";
 
 export default class SituationScene extends Phaser.Scene {
@@ -73,47 +72,53 @@ export default class SituationScene extends Phaser.Scene {
           optionText.setStyle({ color: "#00e6e6", backgroundColor: "#333355" });
         })
         .on("pointerdown", () => {
-            // Apply traits if present
-            if (opt.traits) {
-              for (let t in opt.traits) {
-                traits[t] = (traits[t] || 0) + opt.traits[t];
-              }
-              saveProgress();
+          // Apply traits if present
+          if (opt.traits) {
+            for (let t in opt.traits) {
+              traits[t] = (traits[t] || 0) + opt.traits[t];
             }
-
-            // Debug: log selected option
-            console.log('SituationScene: option selected ->', opt);
-
-            // Award virtue points if option defines them
-            if (typeof opt.points !== 'undefined') {
-              console.log(`SituationScene: awarding ${opt.points} points for reason: ${opt.reason}`);
-              VirtueSystem.awardPoints(this, opt.points, opt.reason || 'Choice made');
-            }
-
-            // Resume previous scene (fallback to LibraryScene)
-            const prev = this.previousScene || 'LibraryScene';
-            if (this.scene.get(prev)) {
-              this.scene.resume(prev);
-            }
-
-            // Close this popup
-            this.scene.stop("SituationScene");
-          });
-        on("pointerdown", async () => {
-          // Apply traits
-          for (let t in opt.traits) {
-            traits[t] = (traits[t] || 0) + opt.traits[t];
+            saveProgress();
           }
-          
-          // Mark this task as completed
-          await markTaskCompleted(this.taskId);
-          
-          await saveProgress();
 
-          // Close popup and resume previous scene
-          this.scene.stop("SituationScene"); // stop popup scene
-          this.scene.resume(this.previousScene); // resume gameplay
+          // Debug: log selected option
+          console.log("SituationScene: option selected ->", opt);
+
+          // Award virtue points if option defines them
+          if (typeof opt.points !== "undefined") {
+            console.log(
+              `SituationScene: awarding ${opt.points} points for reason: ${opt.reason}`
+            );
+            VirtueSystem.awardPoints(
+              this,
+              opt.points,
+              opt.reason || "Choice made"
+            );
+          }
+
+          // Resume previous scene (fallback to LibraryScene)
+          const prev = this.previousScene || "LibraryScene";
+          if (this.scene.get(prev)) {
+            this.scene.resume(prev);
+          }
+
+          // Close this popup
+          this.scene.stop("SituationScene");
         });
+      on("pointerdown", async () => {
+        // Apply traits
+        for (let t in opt.traits) {
+          traits[t] = (traits[t] || 0) + opt.traits[t];
+        }
+
+        // Mark this task as completed
+        await markTaskCompleted(this.taskId);
+
+        await saveProgress();
+
+        // Close popup and resume previous scene
+        this.scene.stop("SituationScene"); // stop popup scene
+        this.scene.resume(this.previousScene); // resume gameplay
+      });
 
       y += 50;
     });

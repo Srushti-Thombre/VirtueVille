@@ -1,7 +1,6 @@
 import * as Phaser from "https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.esm.js";
-import { traits, saveProgress } from "../state/traits.js";
-import { VirtueSystem } from "../state/VirtueSystem.js";
 import { traits, saveProgress, isTaskCompleted } from "../state/traits.js";
+import { VirtueSystem } from "../state/VirtueSystem.js";
 
 export default class LibraryScene extends Phaser.Scene {
   constructor() {
@@ -23,7 +22,7 @@ export default class LibraryScene extends Phaser.Scene {
   create() {
     // Initialize virtue points system
     VirtueSystem.initScene(this);
-    
+
     this.cursors = this.input.keyboard.createCursorKeys();
 
     // --- map layers ---
@@ -39,6 +38,7 @@ export default class LibraryScene extends Phaser.Scene {
     const props = map.createLayer("login", tilesets, 0, 0);
     const exit = map.createLayer("exit", tilesets, 0, 0);
     walls.setCollisionByExclusion([-1]);
+
     //furnitures.setCollisionByExclusion([-1]);
     //props.setCollisionByExclusion([-1]);
     this.player = this.physics.add.sprite(14, 510, "player", 0).setScale(0.5);
@@ -48,21 +48,25 @@ export default class LibraryScene extends Phaser.Scene {
       this.player.width * 0.2,
       this.player.height * 0.2
     );
+
     this.physics.add.collider(this.player, walls);
     //this.physics.add.collider(this.player, furnitures);
     //this.physics.add.collider(this.player, props);
     // Spawn player inside library
     //this.player = this.physics.add.sprite(this.startX, this.startY, 'player');
-    this.cameras.main.startFollow(this.player, true, 0.08, 0.08);
+
+    // Enhanced camera follow
+    this.cameras.main.startFollow(this.player, true, 0.12, 0.12);
+    this.cameras.main.setRoundPixels(false);
     this.player.setCollideWorldBounds(true);
     // Provide minimap bounds so the MinimapScene can map world coordinates
     try {
-      this.registry.set('minimapBounds', {
+      this.registry.set("minimapBounds", {
         worldWidth: map.widthInPixels,
-        worldHeight: map.heightInPixels
+        worldHeight: map.heightInPixels,
       });
     } catch (e) {
-      console.warn('Unable to set minimapBounds in LibraryScene:', e);
+      console.warn("Unable to set minimapBounds in LibraryScene:", e);
     }
     // --- object layer ---
     const loginLayer = map.getObjectLayer("login");
@@ -88,7 +92,7 @@ export default class LibraryScene extends Phaser.Scene {
               console.log("Triggered login object at", obj.x, obj.y);
 
               // Check if library task is already completed
-              if (isTaskCompleted('libraryTask')) {
+              if (isTaskCompleted("libraryTask")) {
                 // Show message that task is already completed
                 /*this.showTaskCompletedMessage("You've already handled the computer situation.");*/
                 return;
@@ -104,22 +108,24 @@ export default class LibraryScene extends Phaser.Scene {
                   {
                     text: "Log out quietly",
                     points: 10,
-                    reason: "Being responsible and protecting someone's privacy"
+                    reason:
+                      "Being responsible and protecting someone's privacy",
                   },
                   {
                     text: "Ignore and walk away",
                     points: -5,
-                    reason: "Ignoring potential security risks"
+                    reason: "Ignoring potential security risks",
                   },
                   {
                     text: "Misuse their account",
                     points: -15,
-                    reason: "Deliberately violating someone's privacy"
+                    reason: "Deliberately violating someone's privacy",
                   },
                   {
                     text: "Inform the librarian",
                     points: 15,
-                    reason: "Taking responsible action to protect someone's account",
+                    reason:
+                      "Taking responsible action to protect someone's account",
                   },
                 ],
               });
@@ -236,19 +242,27 @@ export default class LibraryScene extends Phaser.Scene {
     }
     // update player position for the minimap
     try {
-      this.registry.set('playerPos', { x: this.player.x, y: this.player.y });
+      this.registry.set("playerPos", { x: this.player.x, y: this.player.y });
     } catch (e) {}
   }
 
   showTaskCompletedMessage(message) {
     // Create a temporary text display
-    const messageText = this.add.text(this.cameras.main.centerX, this.cameras.main.centerY - 50, message, {
-      fontSize: '20px',
-      color: '#ffff00',
-      backgroundColor: '#000000',
-      padding: { x: 20, y: 10 },
-      align: 'center'
-    }).setOrigin(0.5).setDepth(1000);
+    const messageText = this.add
+      .text(
+        this.cameras.main.centerX,
+        this.cameras.main.centerY - 50,
+        message,
+        {
+          fontSize: "20px",
+          color: "#ffff00",
+          backgroundColor: "#000000",
+          padding: { x: 20, y: 10 },
+          align: "center",
+        }
+      )
+      .setOrigin(0.5)
+      .setDepth(1000);
 
     // Auto-remove after 3 seconds
     this.time.delayedCall(3000, () => {
