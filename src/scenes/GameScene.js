@@ -1,7 +1,7 @@
 import * as Phaser from "https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.esm.js";
 import { VirtueSystem } from "../state/VirtueSystem.js";
 import { minimapNodes } from "../ui/minimapConfig.js"; // This import is required!
-import { isTaskCompleted } from "../state/traits.js";
+import { isTaskCompleted, markTaskCompleted } from "../state/traits.js";
 
 export default class GameScene extends Phaser.Scene {
   constructor() {
@@ -310,6 +310,14 @@ export default class GameScene extends Phaser.Scene {
 
   triggerParkingLotScene() {
     if (this.parkingSceneTriggered) return;
+    
+    // Check if parking lot task is already completed
+    if (isTaskCompleted("parkingLotTask")) {
+      console.log("ℹ️ Parking lot task already completed");
+      this.parkingLotTrigger.destroy();
+      return;
+    }
+    
     this.parkingSceneTriggered = true;
     this.parkingLotTrigger.destroy();
 
@@ -600,6 +608,10 @@ export default class GameScene extends Phaser.Scene {
       // FINALLY clear the flag and enable input
       this.inParkingLotScene = false;
       this.input.keyboard.enabled = true;
+      
+      // Mark parking lot task as completed
+      markTaskCompleted("parkingLotTask");
+      console.log("✅ Parking lot task completed");
 
       console.log(
         "Camera follow resumed. Player at:",

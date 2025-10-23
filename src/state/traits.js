@@ -12,6 +12,10 @@ export const traits = {
 export const completedTasks = {
   libraryTask: false,
   pocketTask: false,
+  cafeTask: false,
+  gardenTask: false,
+  apartmentTask: false,
+  parkingLotTask: false,
 };
 
 // Current user info

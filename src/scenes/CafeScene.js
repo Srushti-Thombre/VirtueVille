@@ -1,5 +1,7 @@
 // ✅ Full CafeScene.js (only showQuiz fixed, nothing else changed)
 import * as Phaser from "https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.esm.js";
+import { isTaskCompleted, markTaskCompleted } from "../state/traits.js";
+import { VirtueSystem } from "../state/VirtueSystem.js";
 
 export default class CafeScene extends Phaser.Scene {
   constructor() {
@@ -49,6 +51,9 @@ export default class CafeScene extends Phaser.Scene {
   }
 
   create() {
+    // Initialize virtue points system
+    VirtueSystem.initScene(this);
+    
     const map = this.make.tilemap({ key: "cafe" });
     const tilesets = [
       map.addTilesetImage("cafe_tileset", "cafe_tileset"),
@@ -167,6 +172,13 @@ export default class CafeScene extends Phaser.Scene {
           zone,
           () => {
             if (!zone.triggered && !this.dialogOpen && !this.quizActive) {
+              // Check if cafe task is already completed
+              if (isTaskCompleted("cafeTask")) {
+                console.log("ℹ️ Cafe task already completed");
+                zone.triggered = true;
+                this.showThankYouMessage();
+                return;
+              }
               zone.triggered = true;
               this.interactionTriggered = true;
               this.dialogOpen = true;
@@ -354,6 +366,32 @@ export default class CafeScene extends Phaser.Scene {
     this.selectedOption = key;
     this.quizActive = false;
 
+    // Calculate virtue points based on choice
+    let points = 0;
+    let reason = "";
+    switch (index) {
+      case 0: // A: Pay for the man's drink quietly
+        points = 15;
+        reason = "Showed empathy and kindness by helping discreetly";
+        break;
+      case 1: // B: Tell barista to make exception
+        points = 5;
+        reason = "Tried to help but was somewhat pushy";
+        break;
+      case 2: // C: Give reassuring smile
+        points = 10;
+        reason = "Showed empathy without interfering";
+        break;
+      case 3: // D: Ignore the argument
+        points = -5;
+        reason = "Ignored someone in need";
+        break;
+    }
+
+    // Award virtue points
+    VirtueSystem.awardPoints(this, points, reason);
+    console.log(`✅ Cafe: Awarded ${points} points - ${reason}`);
+
     if (this.optionTexts) this.optionTexts.forEach((o) => o.destroy());
     this.optionTexts = [];
 
@@ -398,8 +436,50 @@ export default class CafeScene extends Phaser.Scene {
       onComplete: () => {
         try {
           this.man.destroy();
+          // Mark cafe task as completed
+          markTaskCompleted("cafeTask");
+          console.log("✅ Cafe task completed");
         } catch {}
       },
+    });
+  }
+
+  showThankYouMessage() {
+    const cam = this.cameras.main;
+    const boxWidth = 380;
+    const boxHeight = 100;
+    const boxX = cam.width / 2 - boxWidth / 2;
+    const boxY = cam.height / 2 - boxHeight / 2;
+
+    // Create thank you message box
+    const thankYouBox = this.add.graphics();
+    thankYouBox.fillStyle(0xffffff, 1);
+    thankYouBox.fillRoundedRect(boxX, boxY, boxWidth, boxHeight, 12);
+    thankYouBox.lineStyle(2, 0x4a148c, 1);
+    thankYouBox.strokeRoundedRect(boxX, boxY, boxWidth, boxHeight, 12);
+    thankYouBox.setScrollFactor(0);
+    thankYouBox.setDepth(1000);
+
+    const thankYouText = this.add
+      .text(
+        cam.width / 2,
+        cam.height / 2,
+        "The barista smiles at you.\n\"Thanks for helping that customer earlier!\nYou made my day easier.\"",
+        {
+          fontSize: "16px",
+          fill: "#000",
+          align: "center",
+          wordWrap: { width: boxWidth - 40 },
+        }
+      )
+      .setOrigin(0.5)
+      .setScrollFactor(0)
+      .setDepth(1001);
+
+    // Remove message after 3 seconds
+    this.time.delayedCall(3000, () => {
+      thankYouBox.destroy();
+      thankYouText.destroy();
     });
   }
 }

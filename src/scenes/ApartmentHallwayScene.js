@@ -1,4 +1,5 @@
 import * as Phaser from "https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.esm.js";
+import { isTaskCompleted, markTaskCompleted } from "../state/traits.js";
 
 class ApartmentHallwayScene extends Phaser.Scene {
   constructor() {
@@ -204,6 +205,26 @@ class ApartmentHallwayScene extends Phaser.Scene {
 
   startDialogue() {
     console.log("Player said Yes! Starting dialogue...");
+    
+    // Check if apartment task is already completed
+    if (isTaskCompleted("apartmentTask")) {
+      console.log("ℹ️ Apartment task already completed");
+      this.neighbor.dialogueState = "PROMPTED";
+      this.helpText.setVisible(false);
+      this.dialogueBox.setVisible(false);
+      
+      // Show thank you message
+      this.problemText
+        .setText("Thank you so much for helping me find my key earlier! You're a lifesaver!")
+        .setVisible(true);
+      
+      this.time.delayedCall(3000, () => {
+        this.problemText.setVisible(false);
+        this.neighbor.dialogueState = "IDLE";
+      });
+      return;
+    }
+    
     this.neighbor.dialogueState = "PROMPTED";
     this.helpText.setVisible(false);
     this.dialogueBox.setVisible(false);
@@ -219,6 +240,14 @@ class ApartmentHallwayScene extends Phaser.Scene {
       this.neighbor.dialogueState = "BUSY";
 
       // Launch DialogueScene with choices
+      const dialogueScene = this.scene.get("DialogueScene");
+      
+      // Listen for dialogue completion (only once)
+      dialogueScene.events.once("dialogue-complete", () => {
+        markTaskCompleted("apartmentTask");
+        console.log("✅ Apartment task completed");
+      });
+      
       this.scene.launch("DialogueScene", {
         message:
           "Oh, thank you! I've lost the key to my apartment and I'm locked out. Can you help me?",

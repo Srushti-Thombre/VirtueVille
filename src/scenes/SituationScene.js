@@ -71,7 +71,7 @@ export default class SituationScene extends Phaser.Scene {
         .on("pointerout", () => {
           optionText.setStyle({ color: "#00e6e6", backgroundColor: "#333355" });
         })
-        .on("pointerdown", () => {
+        .on("pointerdown", async () => {
           // Apply traits if present
           if (opt.traits) {
             for (let t in opt.traits) {
@@ -95,6 +95,10 @@ export default class SituationScene extends Phaser.Scene {
             );
           }
 
+          // Mark this task as completed
+          await markTaskCompleted(this.taskId);
+          await saveProgress();
+
           // Resume previous scene (fallback to LibraryScene)
           const prev = this.previousScene || "LibraryScene";
           if (this.scene.get(prev)) {
@@ -104,21 +108,6 @@ export default class SituationScene extends Phaser.Scene {
           // Close this popup
           this.scene.stop("SituationScene");
         });
-      on("pointerdown", async () => {
-        // Apply traits
-        for (let t in opt.traits) {
-          traits[t] = (traits[t] || 0) + opt.traits[t];
-        }
-
-        // Mark this task as completed
-        await markTaskCompleted(this.taskId);
-
-        await saveProgress();
-
-        // Close popup and resume previous scene
-        this.scene.stop("SituationScene"); // stop popup scene
-        this.scene.resume(this.previousScene); // resume gameplay
-      });
 
       y += 50;
     });

@@ -1,4 +1,6 @@
 import * as Phaser from "https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.esm.js";
+import { isTaskCompleted, markTaskCompleted } from "../state/traits.js";
+import { VirtueSystem } from "../state/VirtueSystem.js";
 
 export default class GardenScene extends Phaser.Scene {
   constructor() {
@@ -35,6 +37,10 @@ export default class GardenScene extends Phaser.Scene {
 
   create() {
     console.log("Creating GardenScene...");
+    
+    // Initialize virtue points system
+    VirtueSystem.initScene(this);
+    
     const map = this.make.tilemap({ key: "gardenmap" });
     const city011Tiles = map.addTilesetImage("city01", "city01");
     const cityMapTiles = map.addTilesetImage("CityMap", "CityMap");
@@ -198,6 +204,13 @@ export default class GardenScene extends Phaser.Scene {
       benchZone,
       () => {
         if (benchZone.triggered) return;
+        
+        // Check if garden task is already completed
+        if (isTaskCompleted("gardenTask")) {
+          console.log("ℹ️ Garden task already completed");
+          return;
+        }
+        
         benchZone.triggered = true;
         this.npcASpeech = makeSpeechBubble.call(
           this,
@@ -361,6 +374,33 @@ export default class GardenScene extends Phaser.Scene {
 
     this.quizActive = false;
 
+    // Calculate virtue points based on choice
+    let points = 0;
+    let reason = "";
+    const index = selectedKey.charCodeAt(0) - 65;
+    switch (index) {
+      case 0: // A: Help plant the tree
+        points = 15;
+        reason = "Showed responsibility and care for the environment";
+        break;
+      case 1: // B: Take a photo
+        points = 5;
+        reason = "Showed interest but didn't actively participate";
+        break;
+      case 2: // C: Watch quietly
+        points = 8;
+        reason = "Respectfully observed without interfering";
+        break;
+      case 3: // D: Leave
+        points = -5;
+        reason = "Missed an opportunity to contribute positively";
+        break;
+    }
+
+    // Award virtue points
+    VirtueSystem.awardPoints(this, points, reason);
+    console.log(`✅ Garden: Awarded ${points} points - ${reason}`);
+
     // Clean up quiz elements
     if (this.quizBox) this.quizBox.destroy();
     if (this.quizText) this.quizText.destroy();
@@ -408,6 +448,10 @@ export default class GardenScene extends Phaser.Scene {
   moveCharacters() {
     const lakeX = 40;
     const lakeY = this.map.heightInPixels - 40;
+
+    // Mark garden task as completed
+    markTaskCompleted("gardenTask");
+    console.log("✅ Garden task completed");
 
     this.physics.moveTo(this.gardener, lakeX, lakeY, 100);
     this.tweens.add({

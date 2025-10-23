@@ -65,6 +65,10 @@ export default class DialogueScene extends Phaser.Scene {
       .on("pointerdown", () => {
         // Run callback if provided
         if (this.onChoice) this.onChoice(i);
+        
+        // Emit event for apartment task completion
+        this.events.emit("dialogue-complete");
+        
         // Close this scene and resume hallway
         this.scene.stop("DialogueScene");
         this.scene.resume("ApartmentHallwayScene"); // ✅ resume hallway
