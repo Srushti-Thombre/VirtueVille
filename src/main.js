@@ -1,6 +1,7 @@
 import * as Phaser from "https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.esm.js";
 
 import CharacterSelectionScene from "./scenes/CharacterSelectionScene.js";
+import SettingsScene from "./scenes/SettingsScene.js";
 import GameScene from "./scenes/GameScene.js";
 import LibraryScene from "./scenes/LibraryScene.js";
 import SituationScene from "./scenes/SituationScene.js";
@@ -50,6 +51,7 @@ const config = {
     GameScene, // Start directly with GameScene
     UIScene1,
     CharacterSelectionScene, // Available for mid-game character changes
+    SettingsScene, // Settings menu
 
     LibraryScene,
     SituationScene,
@@ -71,6 +73,27 @@ async function initGame() {
 
     const game = new Phaser.Game(config);
     game.registry.set("score", 0);
+    
+    // Load and set initial volume settings
+    try {
+      const savedSettings = localStorage.getItem("gameSettings");
+      if (savedSettings) {
+        const settings = JSON.parse(savedSettings);
+        game.registry.set("musicVolume", settings.musicVolume || 0.7);
+        game.registry.set("sfxVolume", settings.sfxVolume || 0.8);
+        console.log("✅ Volume settings loaded:", settings);
+      } else {
+        // Set default volumes
+        game.registry.set("musicVolume", 0.7);
+        game.registry.set("sfxVolume", 0.8);
+        console.log("✅ Default volume settings applied");
+      }
+    } catch (error) {
+      console.error("⚠️ Failed to load volume settings, using defaults:", error);
+      game.registry.set("musicVolume", 0.7);
+      game.registry.set("sfxVolume", 0.8);
+    }
+    
     console.log("✅ Game initialized successfully");
 
     // Add global error handler for Phaser

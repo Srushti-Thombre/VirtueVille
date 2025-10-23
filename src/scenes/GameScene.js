@@ -658,9 +658,54 @@ export default class GameScene extends Phaser.Scene {
   }
 
   playBackgroundMusic() {
+    // If music is already playing, just update volume if needed
+    if (this.bgMusic && this.bgMusic.isPlaying) {
+      const currentVolume = this.registry.get("musicVolume") || 0.7;
+      this.bgMusic.setVolume(currentVolume);
+      console.log(`🎵 Background music already playing, volume updated to ${Math.round(currentVolume * 100)}%`);
+      return;
+    }
+    
     if (!this.bgMusic) {
-      this.bgMusic = this.sound.add("bgMusic", { loop: true, volume: 0.4 });
-      this.bgMusic.play();
+      // Get volume from settings, default to 0.7 if not set
+      let musicVolume = this.registry.get("musicVolume");
+      if (musicVolume === undefined) {
+        // Try to load from localStorage
+        try {
+          const savedSettings = localStorage.getItem("gameSettings");
+          if (savedSettings) {
+            const settings = JSON.parse(savedSettings);
+            musicVolume = settings.musicVolume !== undefined ? settings.musicVolume : 0.7;
+          } else {
+            musicVolume = 0.7;
+          }
+        } catch (error) {
+          console.error("❌ Failed to load music volume:", error);
+          musicVolume = 0.7;
+        }
+        this.registry.set("musicVolume", musicVolume);
+      }
+      
+      console.log(`🎵 Creating background music at ${Math.round(musicVolume * 100)}% volume`);
+      
+      try {
+        this.bgMusic = this.sound.add("bgMusic", { loop: true, volume: musicVolume });
+        
+        // Add error handler
+        this.bgMusic.once('loaderror', () => {
+          console.error("❌ Failed to load background music file");
+        });
+        
+        this.bgMusic.play();
+        
+        if (this.bgMusic.isPlaying) {
+          console.log("✅ Background music started successfully");
+        } else {
+          console.warn("⚠️ Background music created but not playing");
+        }
+      } catch (error) {
+        console.error("❌ Error creating background music:", error);
+      }
     }
   }
 

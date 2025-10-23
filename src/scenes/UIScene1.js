@@ -47,6 +47,9 @@ class UIScene1 extends Phaser.Scene {
     // Add Character Change Button
     this.createCharacterButton();
 
+    // Add Settings Button
+    this.createSettingsButton();
+
     this.registry.events.on("changedata-score", this.updateScore, this);
     this.scene.bringToTop(); // bring UIScene graphics to top layer
   }
@@ -134,6 +137,88 @@ class UIScene1 extends Phaser.Scene {
       // Start character selection scene
       this.scene.start("CharacterSelectionScene");
       console.log("✅ Character selection scene started");
+    });
+  }
+
+  createSettingsButton() {
+    const width = this.cameras.main.width;
+    const height = this.cameras.main.height;
+
+    // Position at bottom-left, next to character button
+    const buttonX = 190;
+    const buttonY = height - 50;
+    const buttonSize = 40;
+
+    // Settings button (gear icon background)
+    const buttonBg = this.add.graphics();
+    buttonBg.fillGradientStyle(0x4a148c, 0x4a148c, 0x7b1fa2, 0x7b1fa2, 1);
+    buttonBg.fillRoundedRect(buttonX, buttonY, buttonSize, buttonSize, 10);
+    buttonBg.lineStyle(2, 0x9c27b0, 1);
+    buttonBg.strokeRoundedRect(buttonX, buttonY, buttonSize, buttonSize, 10);
+    buttonBg.setScrollFactor(0);
+    buttonBg.setDepth(1000);
+    buttonBg.setInteractive(
+      new Phaser.Geom.Rectangle(buttonX, buttonY, buttonSize, buttonSize),
+      Phaser.Geom.Rectangle.Contains
+    );
+
+    // Settings icon (gear emoji)
+    const buttonText = this.add
+      .text(buttonX + buttonSize / 2, buttonY + buttonSize / 2, "⚙️", {
+        fontSize: "24px",
+      })
+      .setOrigin(0.5)
+      .setScrollFactor(0)
+      .setDepth(1001);
+
+    // Hover effects
+    buttonBg.on("pointerover", () => {
+      buttonBg.clear();
+      buttonBg.fillGradientStyle(0x5a1a9c, 0x5a1a9c, 0x8b2fb2, 0x8b2fb2, 1);
+      buttonBg.fillRoundedRect(buttonX, buttonY, buttonSize, buttonSize, 10);
+      buttonBg.lineStyle(3, 0xba68c8, 1);
+      buttonBg.strokeRoundedRect(buttonX, buttonY, buttonSize, buttonSize, 10);
+      
+      this.tweens.add({
+        targets: buttonText,
+        angle: 90,
+        duration: 200,
+        ease: "Power2",
+      });
+    });
+
+    buttonBg.on("pointerout", () => {
+      buttonBg.clear();
+      buttonBg.fillGradientStyle(0x4a148c, 0x4a148c, 0x7b1fa2, 0x7b1fa2, 1);
+      buttonBg.fillRoundedRect(buttonX, buttonY, buttonSize, buttonSize, 10);
+      buttonBg.lineStyle(2, 0x9c27b0, 1);
+      buttonBg.strokeRoundedRect(buttonX, buttonY, buttonSize, buttonSize, 10);
+      
+      this.tweens.add({
+        targets: buttonText,
+        angle: 0,
+        duration: 200,
+        ease: "Power2",
+      });
+    });
+
+    // Click handler
+    buttonBg.on("pointerdown", () => {
+      console.log("✅ Opening settings");
+      
+      // Stop SettingsScene if it's already running
+      if (this.scene.isActive("SettingsScene")) {
+        this.scene.stop("SettingsScene");
+      }
+
+      // Pause current game
+      if (this.scene.isActive("GameScene")) {
+        this.scene.pause("GameScene");
+      }
+
+      // Start settings scene
+      this.scene.launch("SettingsScene");
+      console.log("✅ Settings scene launched");
     });
   }
 
