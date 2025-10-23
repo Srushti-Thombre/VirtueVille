@@ -310,14 +310,14 @@ export default class GameScene extends Phaser.Scene {
 
   triggerParkingLotScene() {
     if (this.parkingSceneTriggered) return;
-    
+
     // Check if parking lot task is already completed
     if (isTaskCompleted("parkingLotTask")) {
       console.log("ℹ️ Parking lot task already completed");
       this.parkingLotTrigger.destroy();
       return;
     }
-    
+
     this.parkingSceneTriggered = true;
     this.parkingLotTrigger.destroy();
 
@@ -608,7 +608,7 @@ export default class GameScene extends Phaser.Scene {
       // FINALLY clear the flag and enable input
       this.inParkingLotScene = false;
       this.input.keyboard.enabled = true;
-      
+
       // Mark parking lot task as completed
       markTaskCompleted("parkingLotTask");
       console.log("✅ Parking lot task completed");
@@ -674,10 +674,14 @@ export default class GameScene extends Phaser.Scene {
     if (this.bgMusic && this.bgMusic.isPlaying) {
       const currentVolume = this.registry.get("musicVolume") || 0.7;
       this.bgMusic.setVolume(currentVolume);
-      console.log(`🎵 Background music already playing, volume updated to ${Math.round(currentVolume * 100)}%`);
+      console.log(
+        `🎵 Background music already playing, volume updated to ${Math.round(
+          currentVolume * 100
+        )}%`
+      );
       return;
     }
-    
+
     if (!this.bgMusic) {
       // Get volume from settings, default to 0.7 if not set
       let musicVolume = this.registry.get("musicVolume");
@@ -687,7 +691,8 @@ export default class GameScene extends Phaser.Scene {
           const savedSettings = localStorage.getItem("gameSettings");
           if (savedSettings) {
             const settings = JSON.parse(savedSettings);
-            musicVolume = settings.musicVolume !== undefined ? settings.musicVolume : 0.7;
+            musicVolume =
+              settings.musicVolume !== undefined ? settings.musicVolume : 0.7;
           } else {
             musicVolume = 0.7;
           }
@@ -697,19 +702,26 @@ export default class GameScene extends Phaser.Scene {
         }
         this.registry.set("musicVolume", musicVolume);
       }
-      
-      console.log(`🎵 Creating background music at ${Math.round(musicVolume * 100)}% volume`);
-      
+
+      console.log(
+        `🎵 Creating background music at ${Math.round(
+          musicVolume * 100
+        )}% volume`
+      );
+
       try {
-        this.bgMusic = this.sound.add("bgMusic", { loop: true, volume: musicVolume });
-        
+        this.bgMusic = this.sound.add("bgMusic", {
+          loop: true,
+          volume: musicVolume,
+        });
+
         // Add error handler
-        this.bgMusic.once('loaderror', () => {
+        this.bgMusic.once("loaderror", () => {
           console.error("❌ Failed to load background music file");
         });
-        
+
         this.bgMusic.play();
-        
+
         if (this.bgMusic.isPlaying) {
           console.log("✅ Background music started successfully");
         } else {

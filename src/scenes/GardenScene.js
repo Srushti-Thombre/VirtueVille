@@ -37,10 +37,10 @@ export default class GardenScene extends Phaser.Scene {
 
   create() {
     console.log("Creating GardenScene...");
-    
+
     // Initialize virtue points system
     VirtueSystem.initScene(this);
-    
+
     const map = this.make.tilemap({ key: "gardenmap" });
     const city011Tiles = map.addTilesetImage("city01", "city01");
     const cityMapTiles = map.addTilesetImage("CityMap", "CityMap");
@@ -204,13 +204,13 @@ export default class GardenScene extends Phaser.Scene {
       benchZone,
       () => {
         if (benchZone.triggered) return;
-        
+
         // Check if garden task is already completed
         if (isTaskCompleted("gardenTask")) {
           console.log("ℹ️ Garden task already completed");
           return;
         }
-        
+
         benchZone.triggered = true;
         this.npcASpeech = makeSpeechBubble.call(
           this,

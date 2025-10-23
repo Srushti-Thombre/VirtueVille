@@ -114,18 +114,32 @@ export default class SettingsScene extends Phaser.Scene {
     const sliderHeight = 10;
     const sliderBg = this.add.graphics();
     sliderBg.fillStyle(0x444444, 1);
-    sliderBg.fillRoundedRect(x - sliderWidth / 2, y + 40, sliderWidth, sliderHeight, 5);
+    sliderBg.fillRoundedRect(
+      x - sliderWidth / 2,
+      y + 40,
+      sliderWidth,
+      sliderHeight,
+      5
+    );
     sliderBg.setScrollFactor(0);
     sliderBg.setDepth(depth);
 
     // Slider fill
     const sliderFill = this.add.graphics();
-    this.updateSliderFill(sliderFill, x, y + 40, sliderWidth, sliderHeight, this.settings[settingKey]);
+    this.updateSliderFill(
+      sliderFill,
+      x,
+      y + 40,
+      sliderWidth,
+      sliderHeight,
+      this.settings[settingKey]
+    );
     sliderFill.setScrollFactor(0);
     sliderFill.setDepth(depth + 1);
 
     // Slider handle
-    const handleX = x - sliderWidth / 2 + sliderWidth * this.settings[settingKey];
+    const handleX =
+      x - sliderWidth / 2 + sliderWidth * this.settings[settingKey];
     const handle = this.add.circle(handleX, y + 45, 15, 0x9c27b0);
     handle.setStrokeStyle(3, 0xffffff);
     handle.setScrollFactor(0);
@@ -137,18 +151,25 @@ export default class SettingsScene extends Phaser.Scene {
       const minX = x - sliderWidth / 2;
       const maxX = x + sliderWidth / 2;
       const clampedX = Phaser.Math.Clamp(dragX, minX, maxX);
-      
+
       handle.x = clampedX;
-      
+
       const volume = (clampedX - minX) / sliderWidth;
       this.settings[settingKey] = volume;
-      
+
       volumeText.setText(`${Math.round(volume * 100)}%`);
-      this.updateSliderFill(sliderFill, x, y + 40, sliderWidth, sliderHeight, volume);
-      
+      this.updateSliderFill(
+        sliderFill,
+        x,
+        y + 40,
+        sliderWidth,
+        sliderHeight,
+        volume
+      );
+
       // Save settings
       this.saveSettings();
-      
+
       // Apply volume changes immediately
       this.registry.set(settingKey, volume);
       this.applyVolumeChanges(settingKey, volume);
@@ -189,23 +210,36 @@ export default class SettingsScene extends Phaser.Scene {
     const toggleWidth = 60;
     const toggleHeight = 30;
     const toggleBg = this.add.graphics();
-    
+
     const updateToggle = (isOn) => {
       toggleBg.clear();
       toggleBg.fillStyle(isOn ? 0x4caf50 : 0x666666, 1);
-      toggleBg.fillRoundedRect(x + 80, y - toggleHeight / 2, toggleWidth, toggleHeight, 15);
+      toggleBg.fillRoundedRect(
+        x + 80,
+        y - toggleHeight / 2,
+        toggleWidth,
+        toggleHeight,
+        15
+      );
     };
 
     updateToggle(this.settings.fullscreen);
     toggleBg.setScrollFactor(0);
     toggleBg.setDepth(depth);
     toggleBg.setInteractive(
-      new Phaser.Geom.Rectangle(x + 80, y - toggleHeight / 2, toggleWidth, toggleHeight),
+      new Phaser.Geom.Rectangle(
+        x + 80,
+        y - toggleHeight / 2,
+        toggleWidth,
+        toggleHeight
+      ),
       Phaser.Geom.Rectangle.Contains
     );
 
     // Toggle circle
-    const circleX = this.settings.fullscreen ? x + 80 + toggleWidth - 18 : x + 80 + 18;
+    const circleX = this.settings.fullscreen
+      ? x + 80 + toggleWidth - 18
+      : x + 80 + 18;
     const toggleCircle = this.add.circle(circleX, y, 12, 0xffffff);
     toggleCircle.setScrollFactor(0);
     toggleCircle.setDepth(depth + 1);
@@ -225,9 +259,9 @@ export default class SettingsScene extends Phaser.Scene {
     // Click handler
     toggleBg.on("pointerdown", () => {
       this.settings.fullscreen = !this.settings.fullscreen;
-      
+
       updateToggle(this.settings.fullscreen);
-      
+
       // Animate circle
       this.tweens.add({
         targets: toggleCircle,
@@ -270,11 +304,22 @@ export default class SettingsScene extends Phaser.Scene {
 
     const button = this.add.graphics();
     button.fillStyle(0x4caf50, 1);
-    button.fillRoundedRect(x - buttonWidth / 2, y - buttonHeight / 2, buttonWidth, buttonHeight, 18);
+    button.fillRoundedRect(
+      x - buttonWidth / 2,
+      y - buttonHeight / 2,
+      buttonWidth,
+      buttonHeight,
+      18
+    );
     button.setScrollFactor(0);
     button.setDepth(depth);
     button.setInteractive(
-      new Phaser.Geom.Rectangle(x - buttonWidth / 2, y - buttonHeight / 2, buttonWidth, buttonHeight),
+      new Phaser.Geom.Rectangle(
+        x - buttonWidth / 2,
+        y - buttonHeight / 2,
+        buttonWidth,
+        buttonHeight
+      ),
       Phaser.Geom.Rectangle.Contains
     );
 
@@ -292,14 +337,14 @@ export default class SettingsScene extends Phaser.Scene {
     // Click handler
     button.on("pointerdown", () => {
       console.log("🎵 Testing music playback...");
-      
+
       // Try to resume audio context
       if (this.sound.context.state === "suspended") {
         this.sound.context.resume().then(() => {
           console.log("✅ Audio context resumed");
         });
       }
-      
+
       // Find GameScene and try to play music
       const gameScene = this.scene.get("GameScene");
       if (gameScene) {
@@ -316,7 +361,7 @@ export default class SettingsScene extends Phaser.Scene {
           gameScene.playBackgroundMusic();
         }
       }
-      
+
       buttonText.setText("✅ Playing");
       this.time.delayedCall(1000, () => {
         buttonText.setText("🎵 Test Music");
@@ -327,13 +372,25 @@ export default class SettingsScene extends Phaser.Scene {
     button.on("pointerover", () => {
       button.clear();
       button.fillStyle(0x66bb6a, 1);
-      button.fillRoundedRect(x - buttonWidth / 2, y - buttonHeight / 2, buttonWidth, buttonHeight, 18);
+      button.fillRoundedRect(
+        x - buttonWidth / 2,
+        y - buttonHeight / 2,
+        buttonWidth,
+        buttonHeight,
+        18
+      );
     });
 
     button.on("pointerout", () => {
       button.clear();
       button.fillStyle(0x4caf50, 1);
-      button.fillRoundedRect(x - buttonWidth / 2, y - buttonHeight / 2, buttonWidth, buttonHeight, 18);
+      button.fillRoundedRect(
+        x - buttonWidth / 2,
+        y - buttonHeight / 2,
+        buttonWidth,
+        buttonHeight,
+        18
+      );
     });
   }
 
@@ -343,11 +400,22 @@ export default class SettingsScene extends Phaser.Scene {
 
     const button = this.add.graphics();
     button.fillStyle(0xffffff, 1);
-    button.fillRoundedRect(x - buttonWidth / 2, y - buttonHeight / 2, buttonWidth, buttonHeight, 25);
+    button.fillRoundedRect(
+      x - buttonWidth / 2,
+      y - buttonHeight / 2,
+      buttonWidth,
+      buttonHeight,
+      25
+    );
     button.setScrollFactor(0);
     button.setDepth(depth);
     button.setInteractive(
-      new Phaser.Geom.Rectangle(x - buttonWidth / 2, y - buttonHeight / 2, buttonWidth, buttonHeight),
+      new Phaser.Geom.Rectangle(
+        x - buttonWidth / 2,
+        y - buttonHeight / 2,
+        buttonWidth,
+        buttonHeight
+      ),
       Phaser.Geom.Rectangle.Contains
     );
 
@@ -366,7 +434,13 @@ export default class SettingsScene extends Phaser.Scene {
     button.on("pointerover", () => {
       button.clear();
       button.fillStyle(0xf0f0f0, 1);
-      button.fillRoundedRect(x - buttonWidth / 2, y - buttonHeight / 2, buttonWidth, buttonHeight, 25);
+      button.fillRoundedRect(
+        x - buttonWidth / 2,
+        y - buttonHeight / 2,
+        buttonWidth,
+        buttonHeight,
+        25
+      );
       this.tweens.add({
         targets: [button, buttonText],
         scaleX: 1.05,
@@ -379,7 +453,13 @@ export default class SettingsScene extends Phaser.Scene {
     button.on("pointerout", () => {
       button.clear();
       button.fillStyle(0xffffff, 1);
-      button.fillRoundedRect(x - buttonWidth / 2, y - buttonHeight / 2, buttonWidth, buttonHeight, 25);
+      button.fillRoundedRect(
+        x - buttonWidth / 2,
+        y - buttonHeight / 2,
+        buttonWidth,
+        buttonHeight,
+        25
+      );
       this.tweens.add({
         targets: [button, buttonText],
         scaleX: 1,
@@ -392,7 +472,7 @@ export default class SettingsScene extends Phaser.Scene {
     button.on("pointerdown", () => {
       console.log("✅ Closing settings");
       this.scene.stop("SettingsScene");
-      
+
       // Resume the game scene if it was paused
       if (this.scene.isPaused("GameScene")) {
         this.scene.resume("GameScene");
@@ -407,7 +487,7 @@ export default class SettingsScene extends Phaser.Scene {
         const parsed = JSON.parse(savedSettings);
         this.settings = { ...this.settings, ...parsed };
         console.log("✅ Settings loaded:", this.settings);
-        
+
         // Apply settings to registry
         this.registry.set("musicVolume", this.settings.musicVolume);
         this.registry.set("sfxVolume", this.settings.sfxVolume);
@@ -430,10 +510,10 @@ export default class SettingsScene extends Phaser.Scene {
     // Apply music volume to all active music in all scenes
     if (settingKey === "musicVolume") {
       console.log(`🎵 Setting music volume to ${Math.round(volume * 100)}%`);
-      
+
       // Get all running scenes
       const scenes = this.scene.manager.scenes;
-      scenes.forEach(scene => {
+      scenes.forEach((scene) => {
         if (scene.bgMusic && scene.bgMusic.isPlaying) {
           scene.bgMusic.setVolume(volume);
         }
@@ -442,11 +522,11 @@ export default class SettingsScene extends Phaser.Scene {
           scene.backgroundMusic.setVolume(volume);
         }
       });
-      
+
       // Set global music volume for future sounds
       this.sound.volume = volume;
     }
-    
+
     // Apply sound effects volume
     if (settingKey === "sfxVolume") {
       console.log(`🔊 Setting SFX volume to ${Math.round(volume * 100)}%`);

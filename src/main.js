@@ -73,7 +73,7 @@ async function initGame() {
 
     const game = new Phaser.Game(config);
     game.registry.set("score", 0);
-    
+
     // Load and set initial volume settings
     try {
       const savedSettings = localStorage.getItem("gameSettings");
@@ -89,11 +89,14 @@ async function initGame() {
         console.log("✅ Default volume settings applied");
       }
     } catch (error) {
-      console.error("⚠️ Failed to load volume settings, using defaults:", error);
+      console.error(
+        "⚠️ Failed to load volume settings, using defaults:",
+        error
+      );
       game.registry.set("musicVolume", 0.7);
       game.registry.set("sfxVolume", 0.8);
     }
-    
+
     console.log("✅ Game initialized successfully");
 
     // Add global error handler for Phaser

@@ -178,7 +178,7 @@ class UIScene1 extends Phaser.Scene {
       buttonBg.fillRoundedRect(buttonX, buttonY, buttonSize, buttonSize, 10);
       buttonBg.lineStyle(3, 0xba68c8, 1);
       buttonBg.strokeRoundedRect(buttonX, buttonY, buttonSize, buttonSize, 10);
-      
+
       this.tweens.add({
         targets: buttonText,
         angle: 90,
@@ -193,7 +193,7 @@ class UIScene1 extends Phaser.Scene {
       buttonBg.fillRoundedRect(buttonX, buttonY, buttonSize, buttonSize, 10);
       buttonBg.lineStyle(2, 0x9c27b0, 1);
       buttonBg.strokeRoundedRect(buttonX, buttonY, buttonSize, buttonSize, 10);
-      
+
       this.tweens.add({
         targets: buttonText,
         angle: 0,
@@ -205,7 +205,7 @@ class UIScene1 extends Phaser.Scene {
     // Click handler
     buttonBg.on("pointerdown", () => {
       console.log("✅ Opening settings");
-      
+
       // Stop SettingsScene if it's already running
       if (this.scene.isActive("SettingsScene")) {
         this.scene.stop("SettingsScene");

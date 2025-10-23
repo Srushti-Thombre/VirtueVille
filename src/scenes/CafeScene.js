@@ -53,7 +53,7 @@ export default class CafeScene extends Phaser.Scene {
   create() {
     // Initialize virtue points system
     VirtueSystem.initScene(this);
-    
+
     const map = this.make.tilemap({ key: "cafe" });
     const tilesets = [
       map.addTilesetImage("cafe_tileset", "cafe_tileset"),
@@ -464,7 +464,7 @@ export default class CafeScene extends Phaser.Scene {
       .text(
         cam.width / 2,
         cam.height / 2,
-        "The barista smiles at you.\n\"Thanks for helping that customer earlier!\nYou made my day easier.\"",
+        'The barista smiles at you.\n"Thanks for helping that customer earlier!\nYou made my day easier."',
         {
           fontSize: "16px",
           fill: "#000",
