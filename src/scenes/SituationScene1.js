@@ -2,6 +2,7 @@ import * as Phaser from "https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.
 import LibraryScene from "../scenes/LibraryScene.js";
 import { traits, saveProgress, markTaskCompleted } from "../state/traits.js";
 import GameScene from "./GameScene.js";
+import { VirtueSystem } from "../state/VirtueSystem.js";
 
 export default class SituationScene1 extends Phaser.Scene {
   constructor() {
@@ -11,11 +12,14 @@ export default class SituationScene1 extends Phaser.Scene {
   init(data) {
     this.message = data.message;
     this.options = data.options;
-    this.taskId = data.taskId || "pocketTask"; // Add task ID
+    this.taskId = data.taskId || "pocketTask"; // Default task ID
   }
 
   create() {
     const { width, height } = this.sys.game.config;
+
+    // Initialize virtue system and ensure UI is running
+    VirtueSystem.initScene(this);
 
     // --- Dark overlay background ---
     this.add.rectangle(width / 2, height / 2, width, height, 0x000000, 0.6);
@@ -66,19 +70,28 @@ export default class SituationScene1 extends Phaser.Scene {
           optionText.setStyle({ color: "#00e6e6", backgroundColor: "#333355" });
         })
         .on("pointerdown", async () => {
-          // Apply traits
-          for (let t in opt.traits) {
-            traits[t] = (traits[t] || 0) + opt.traits[t];
+          console.log('SituationScene1: option selected ->', opt);
+
+          // Apply traits if present
+          if (opt.traits) {
+            for (let t in opt.traits) {
+              traits[t] = (traits[t] || 0) + opt.traits[t];
+            }
+            await saveProgress();
           }
-          
+
           // Mark this task as completed
           await markTaskCompleted(this.taskId);
-          
-          await saveProgress();
 
-          // Close popup and resume library
-          this.scene.stop("SituationScene1"); // stop popup scene
-          this.scene.resume("PocketScene"); // resume gameplay
+          // Award virtue points if defined
+          if (typeof opt.points !== "undefined") {
+            console.log(`SituationScene1: awarding ${opt.points} points for reason: ${opt.reason}`);
+            VirtueSystem.awardPoints(this, opt.points, opt.reason || "Choice made");
+          }
+
+          // Close popup and resume PocketScene
+          this.scene.stop("SituationScene1"); // stop popup
+          this.scene.resume("PocketScene");   // resume main gameplay
         });
 
       y += 50;

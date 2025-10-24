@@ -1,148 +1,342 @@
-import express from 'express';
-import sqlite3 from 'sqlite3';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import session from 'express-session';
-
-
+import express from "express";
+import sqlite3 from "sqlite3";
+import path from "path";
+import { fileURLToPath } from "url";
+import session from "express-session";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-app.use(session({
-  secret: 'mysecretkey',   // any random string
-  resave: false,
-  saveUninitialized: true
-}));
+
+// Error handling middleware for session errors
+app.use(
+  session({
+    secret: "mysecretkey", // Change this to a strong random string in production
+    resave: false,
+    saveUninitialized: false, // Don't create session until something is stored
+    cookie: {
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      httpOnly: true, // Prevents client-side JS from accessing the cookie
+      secure: false, // Set to true if using HTTPS
+    },
+  })
+);
 const port = 3000;
-//app.use(express.static(__dirname));
-app.use(express.static(path.join(__dirname, 'public')));
+
+// Handle favicon.ico requests silently
+app.get("/favicon.ico", (req, res) => res.status(204).end());
+
+// Serve static files from both root directory and public folder
+app.use(express.static(path.join(__dirname)));
+app.use(express.static(path.join(__dirname, "public")));
 
 // Middleware to handle form and JSON data
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-// Database connection
-const db = new sqlite3.Database('users.db', (err) => {
-    if (err) {
-        console.error(err.message);
-    } else {
-        console.log('Connected to the users.db database.');
+// Global error handler for JSON parsing errors
+app.use((err, req, res, next) => {
+  if (err instanceof SyntaxError && err.status === 400 && "body" in err) {
+    console.error("JSON Parse Error:", err.message);
+    return res.status(400).json({ error: "Invalid JSON format" });
+  }
+  next(err);
+});
 
-        db.run(`CREATE TABLE IF NOT EXISTS users (
+// Database connection with enhanced error handling
+const db = new sqlite3.Database("users.db", (err) => {
+  if (err) {
+    console.error("❌ Database connection failed:", err.message);
+    process.exit(1); // Exit if database fails
+  } else {
+    console.log("✅ Connected to the users.db database.");
+
+    db.run(
+      `CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT NOT NULL UNIQUE,
              email TEXT NOT NULL UNIQUE,
             password TEXT NOT NULL
-        )`, (err) => {
-            if (err) {
-                console.error(err.message);
-            } else {
-               db.run(`INSERT OR IGNORE INTO users (username, email, password) VALUES (?, ?, ?)`, 
-       ['admin', 'admin@example.com', 'password123'],
-
-                       (err) => {
-                    if (err) console.error(err.message);
-                    console.log('Test user "admin" created if it did not exist.');
-                    });
-                }
-            });
-        }
-    });
-
-app.get('/', (req, res) => {
-    res.redirect('/auth.html');
-});
-
-// Serve signup page
-app.get('/auth.html', (req, res) => {
-    res.sendFile(path.join(__dirname, 'view' ,'auth.html'));
-});
-
-// Handle registration
-app.post('/register', (req, res) => {
-    const { username, email, password } = req.body;
-
-    if (!username ||!email || !password) {
-        return res.status(400).send('All username,email and password are required.');
-    }
-
-    const checkSql = `SELECT username FROM users WHERE username = ? OR email = ?`;
-    db.get(checkSql, [username,email], (err, row) => {
+        )`,
+      (err) => {
         if (err) {
-            return res.status(500).send('Database error.');
-        }
-
-        if (row) {
-            res.status(409).send('Username already exists. Please choose a different one.');
+          console.error("❌ Table creation failed:", err.message);
         } else {
-            const insertSql = `INSERT INTO users (username,email, password) VALUES (?,?,?)`;
-            db.run(insertSql, [username,email, password], function(err) {
-                if (err) {
-                    return res.status(500).send('Registration failed. Please try again.');
-                }
-                res.status(201).send('Registration successful! You can now sign in.');
-            });
+          console.log("✅ Users table ready.");
+          db.run(
+            `INSERT OR IGNORE INTO users (username, email, password) VALUES (?, ?, ?)`,
+            ["admin", "admin@example.com", "password123"],
+
+            (err) => {
+              if (err) {
+                console.error("❌ Test user creation failed:", err.message);
+              } else {
+                console.log(
+                  '✅ Test user "admin" created if it did not exist.'
+                );
+              }
+            }
+          );
         }
-    });
+      }
+    );
+  }
 });
 
-// Start server
-app.listen(port, () => {
-    console.log(`Server running at http://localhost:${port}`);
-});
-// Serve login page
-app.get('/login', (req, res) => {
-    res.sendFile(path.join(__dirname, 'login.html'));
+// Serve landing page (index.html) with error handling
+app.get("/", (req, res, next) => {
+  try {
+    res.sendFile(path.join(__dirname, "view", "index.html"));
+  } catch (error) {
+    console.error("❌ Error serving index.html:", error.message);
+    next(error);
+  }
 });
 
-// Handle login
-app.post('/login', (req, res) => {
-    const { username, password } = req.body;
+// Serve auth page (login/signup) with error handling
+app.get("/auth.html", (req, res, next) => {
+  try {
+    res.sendFile(path.join(__dirname, "view", "auth.html"));
+  } catch (error) {
+    console.error("❌ Error serving auth.html:", error.message);
+    next(error);
+  }
+});
 
-    if (!username || !password) {
-        return res.status(400).send('Username and password are required.');
+// Handle registration with enhanced error handling
+app.post("/register", (req, res) => {
+  const { username, email, password } = req.body;
+
+  // Input validation
+  if (!username || !email || !password) {
+    console.warn("⚠️ Registration attempt with missing fields");
+    return res
+      .status(400)
+      .json({ error: "All username, email and password are required." });
+  }
+
+  // Validate email format
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    console.warn("⚠️ Invalid email format:", email);
+    return res.status(400).json({ error: "Invalid email format." });
+  }
+
+  // Validate password length
+  if (password.length < 6) {
+    console.warn("⚠️ Password too short");
+    return res
+      .status(400)
+      .json({ error: "Password must be at least 6 characters long." });
+  }
+
+  const checkSql = `SELECT username FROM users WHERE username = ? OR email = ?`;
+  db.get(checkSql, [username, email], (err, row) => {
+    if (err) {
+      console.error(
+        "❌ Database error during registration check:",
+        err.message
+      );
+      return res
+        .status(500)
+        .json({ error: "Database error. Please try again later." });
     }
 
-    const sql = 'SELECT * FROM users WHERE username = ? AND password = ?';
-    db.get(sql, [username, password], (err, row) => {
+    if (row) {
+      console.warn("⚠️ Duplicate registration attempt:", username);
+      return res
+        .status(409)
+        .json({
+          error:
+            "Username or email already exists. Please choose a different one.",
+        });
+    } else {
+      const insertSql = `INSERT INTO users (username, email, password) VALUES (?, ?, ?)`;
+      db.run(insertSql, [username, email, password], function (err) {
         if (err) {
-            return res.status(500).send('Database error.');
+          console.error("❌ Registration failed:", err.message);
+          return res
+            .status(500)
+            .json({ error: "Registration failed. Please try again." });
         }
-        if (row) {
-            // ✅ Save user info in session
-            req.session.user = { id: row.id, username: row.username };
-            res.redirect('/GameScene'); // redirect to scene page after login
-        } else {
-            res.status(401).send('Invalid username or password.');
-        }
-    });
-});
-
-// API endpoint to get current user info
-app.get('/api/user', (req, res) => {
-    if (!req.session.user) {
-        return res.status(401).json({ error: 'Not logged in' });
+        console.log("✅ New user registered:", username);
+        res
+          .status(201)
+          .json({
+            success: true,
+            message: "Registration successful! You can now sign in.",
+          });
+      });
     }
-    res.json({ user: req.session.user });
+  });
 });
 
-// API endpoint to logout
-app.post('/api/logout', (req, res) => {
-    req.session.destroy((err) => {
+// Start server with error handling
+const server = app
+  .listen(port, () => {
+    console.log(`✅ Server running at http://localhost:${port}`);
+  })
+  .on("error", (err) => {
+    if (err.code === "EADDRINUSE") {
+      console.error(
+        `❌ Port ${port} is already in use. Please use a different port or close the other application.`
+      );
+    } else {
+      console.error("❌ Server error:", err.message);
+    }
+    process.exit(1);
+  });
+
+// Graceful shutdown
+process.on("SIGTERM", () => {
+  console.log("⚠️ SIGTERM received, closing server...");
+  server.close(() => {
+    console.log("✅ Server closed");
+    db.close((err) => {
+      if (err) {
+        console.error("❌ Error closing database:", err.message);
+      } else {
+        console.log("✅ Database connection closed");
+      }
+      process.exit(0);
+    });
+  });
+});
+
+process.on("SIGINT", () => {
+  console.log("\n⚠️ SIGINT received, closing server...");
+  server.close(() => {
+    console.log("✅ Server closed");
+    db.close((err) => {
+      if (err) {
+        console.error("❌ Error closing database:", err.message);
+      } else {
+        console.log("✅ Database connection closed");
+      }
+      process.exit(0);
+    });
+  });
+});
+
+// Handle login with enhanced error handling
+app.post("/login", (req, res) => {
+  const { username, password } = req.body;
+
+  // Input validation
+  if (!username || !password) {
+    console.warn("⚠️ Login attempt with missing credentials");
+    return res
+      .status(400)
+      .json({ error: "Username and password are required." });
+  }
+
+  const sql = "SELECT * FROM users WHERE username = ? AND password = ?";
+  db.get(sql, [username, password], (err, row) => {
+    if (err) {
+      console.error("❌ Database error during login:", err.message);
+      return res
+        .status(500)
+        .json({ error: "Database error. Please try again later." });
+    }
+    if (row) {
+      // ✅ Save user info in session
+      req.session.user = {
+        id: row.id,
+        username: row.username,
+        loginTime: new Date().toISOString(),
+      };
+      // Mark this as a new login for welcome message
+      req.session.showWelcome = true;
+
+      // Save session before redirect
+      req.session.save((err) => {
         if (err) {
-            return res.status(500).json({ error: 'Could not log out' });
+          console.error("❌ Session save error:", err.message);
+          return res
+            .status(500)
+            .json({ error: "Session error. Please try again." });
         }
-        res.json({ success: true });
-    });
+        console.log("✅ User logged in:", username);
+        res.redirect("/phaser.html"); // redirect to game after login
+      });
+    } else {
+      console.warn("⚠️ Failed login attempt for:", username);
+      res.status(401).json({ error: "Invalid username or password." });
+    }
+  });
 });
 
-app.get('/GameScene', (req, res) => {
+// API endpoint to get current user info with error handling
+app.get("/api/user", (req, res) => {
+  try {
     if (!req.session.user) {
-        return res.redirect('/auth.html'); // not logged in → go to auth page
+      return res.status(401).json({ error: "Not logged in" });
     }
 
-    res.sendFile(path.join(__dirname, 'view/index.html')); // your actual scene page
+    // Check if we should show welcome message
+    const showWelcome = req.session.showWelcome || false;
+
+    // Clear the welcome flag after first fetch
+    if (showWelcome) {
+      req.session.showWelcome = false;
+      req.session.save((err) => {
+        if (err) {
+          console.error("❌ Error saving session:", err.message);
+        }
+      });
+    }
+
+    res.json({
+      user: req.session.user,
+      showWelcome: showWelcome,
+    });
+  } catch (error) {
+    console.error("❌ Error in /api/user:", error.message);
+    res.status(500).json({ error: "Server error" });
+  }
 });
-app.use(express.static(path.join(__dirname)));
+
+// API endpoint to logout with error handling
+app.post("/api/logout", (req, res) => {
+  req.session.destroy((err) => {
+    if (err) {
+      console.error("❌ Logout error:", err.message);
+      return res.status(500).json({ error: "Could not log out" });
+    }
+    console.log("✅ User logged out");
+    res.json({ success: true });
+  });
+});
+
+// Serve phaser game page (protected route) with error handling
+app.get("/phaser.html", (req, res, next) => {
+  try {
+    if (!req.session.user) {
+      console.warn("⚠️ Unauthorized access attempt to phaser.html");
+      return res.redirect("/auth.html"); // not logged in → go to auth page
+    }
+    res.sendFile(path.join(__dirname, "public/phaser.html")); // serve the game
+  } catch (error) {
+    console.error("❌ Error serving phaser.html:", error.message);
+    next(error);
+  }
+});
+
+// 404 Error handler - must be after all routes
+app.use((req, res) => {
+  console.warn("⚠️ 404 Not Found:", req.url);
+  res.status(404).json({ error: "Page not found" });
+});
+
+// Global error handler - must be last
+app.use((err, req, res, next) => {
+  console.error("❌ Server Error:", err.stack);
+  res.status(err.status || 500).json({
+    error: "Internal server error",
+    message:
+      process.env.NODE_ENV === "development"
+        ? err.message
+        : "Something went wrong",
+  });
+});

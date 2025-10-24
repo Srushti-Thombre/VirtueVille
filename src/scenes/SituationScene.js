@@ -1,6 +1,7 @@
 import * as Phaser from "https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.esm.js";
-import LibraryScene from "../scenes/LibraryScene.js";
+import { VirtueSystem } from "../state/VirtueSystem.js";
 import { traits, saveProgress, markTaskCompleted } from "../state/traits.js";
+import LibraryScene from "../scenes/LibraryScene.js";
 import GameScene from "./PocketScene.js";
 
 export default class SituationScene extends Phaser.Scene {
@@ -11,12 +12,16 @@ export default class SituationScene extends Phaser.Scene {
   init(data) {
     this.message = data.message;
     this.options = data.options;
+    this.previousScene = data.previousScene || "LibraryScene";
     this.taskId = data.taskId || "libraryTask"; // Add task ID
     this.previousScene = data.previousScene || "LibraryScene"; // Add previous scene
   }
 
   create() {
     const { width, height } = this.sys.game.config;
+
+    // Initialize virtue system and ensure UI is running
+    VirtueSystem.initScene(this);
 
     // --- Dark overlay background ---
     this.add.rectangle(width / 2, height / 2, width, height, 0x000000, 0.6);
@@ -67,19 +72,41 @@ export default class SituationScene extends Phaser.Scene {
           optionText.setStyle({ color: "#00e6e6", backgroundColor: "#333355" });
         })
         .on("pointerdown", async () => {
-          // Apply traits
-          for (let t in opt.traits) {
-            traits[t] = (traits[t] || 0) + opt.traits[t];
+          // Apply traits if present
+          if (opt.traits) {
+            for (let t in opt.traits) {
+              traits[t] = (traits[t] || 0) + opt.traits[t];
+            }
+            saveProgress();
           }
-          
+
+          // Debug: log selected option
+          console.log("SituationScene: option selected ->", opt);
+
+          // Award virtue points if option defines them
+          if (typeof opt.points !== "undefined") {
+            console.log(
+              `SituationScene: awarding ${opt.points} points for reason: ${opt.reason}`
+            );
+            VirtueSystem.awardPoints(
+              this,
+              opt.points,
+              opt.reason || "Choice made"
+            );
+          }
+
           // Mark this task as completed
           await markTaskCompleted(this.taskId);
-          
           await saveProgress();
 
-          // Close popup and resume previous scene
-          this.scene.stop("SituationScene"); // stop popup scene
-          this.scene.resume(this.previousScene); // resume gameplay
+          // Resume previous scene (fallback to LibraryScene)
+          const prev = this.previousScene || "LibraryScene";
+          if (this.scene.get(prev)) {
+            this.scene.resume(prev);
+          }
+
+          // Close this popup
+          this.scene.stop("SituationScene");
         });
 
       y += 50;

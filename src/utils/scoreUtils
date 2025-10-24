@@ -1,0 +1,29 @@
+// src/utils/scoreUtils.js
+export function getVirtuePoints(scene) {
+  return scene.registry.get('score') || 0;
+}
+
+export function setVirtuePoints(scene, value) {
+  scene.registry.set('score', value);
+  // emit an event on the scene so scenes can react
+  if (scene && scene.events) scene.events.emit('virtuePointsChanged', value);
+  return value;
+}
+
+/**
+ * updateVirtuePoints(scene, delta, { clampMin })
+ * - scene: Phaser.Scene (this)
+ * - delta: number (positive to add, negative to subtract)
+ * - clampMin: optional boolean (if true, score won't go below 0)
+ * Returns new score.
+ */
+export function updateVirtuePoints(scene, delta, { clampMin = false } = {}) {
+  if (!scene || !scene.registry) throw new Error('updateVirtuePoints requires a scene with registry');
+  const current = scene.registry.get('score') || 0;
+  let next = current + Number(delta || 0);
+  if (clampMin) next = Math.max(0, next);
+  scene.registry.set('score', next);
+  // notify listeners in the current scene
+  if (scene && scene.events) scene.events.emit('virtuePointsChanged', next, delta);
+  return next;
+}
