@@ -1,5 +1,5 @@
 import * as Phaser from "https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.esm.js";
-import { isTaskCompleted, markTaskCompleted } from "../state/traits.js";
+import { isTaskCompleted, markTaskCompleted, saveProgress } from "../state/traits.js";
 
 class ApartmentHallwayScene extends Phaser.Scene {
   constructor() {
@@ -143,6 +143,15 @@ class ApartmentHallwayScene extends Phaser.Scene {
       if (!exitZone.triggered) {
         exitZone.triggered = true;
         console.log("Player hit exit zone!");
+         
+
+  markTaskCompleted("ApartmentHallwayScene");
+saveProgress();
+    // ✅ 2. Update minimap dot color
+    const gameScene = this.scene.get("GameScene");
+    if (gameScene?.updateMinimapDotColor) {
+      gameScene.updateMinimapDotColor("ApartmentHallwayScene");
+    }
         this.scene.start("GameScene");
       }
     });

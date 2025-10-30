@@ -170,9 +170,15 @@ export default class CafeScene extends Phaser.Scene {
       this.exitZone = this.physics.add
         .staticImage(exitObj.x, exitObj.y, null)
         .setVisible(false);
-      this.physics.add.overlap(this.player, this.exitZone, () =>
+      this.physics.add.overlap(this.player, this.exitZone, () =>{
+        markTaskCompleted("CafeScene");
+    saveProgress();
+    const gameScene = this.scene.get("GameScene");
+    if (gameScene?.updateMinimapDotColor) {
+      gameScene.updateMinimapDotColor("CafeScene");
+    }
         this.scene.start("GameScene")
-      );
+     });
     }
 
     const triggerLayer = map.getObjectLayer("trigger");

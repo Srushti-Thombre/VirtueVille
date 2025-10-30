@@ -652,9 +652,16 @@ export default class GameScene extends Phaser.Scene {
       this.inParkingLotScene = false;
       this.input.keyboard.enabled = true;
 
-      // Mark parking lot task as completed
-      markTaskCompleted("parkingLotTask");
-      console.log("✅ Parking lot task completed");
+     // Mark parking lot task as completed
+markTaskCompleted("GameScene");  // 👈 make sure the key matches the minimap node’s key
+saveProgress();
+console.log("✅ Parking lot task completed");
+
+// ✅ Update minimap dot color immediately
+const gameScene = this.scene.get("GameScene");
+if (gameScene?.updateMinimapDotColor) {
+  gameScene.updateMinimapDotColor("ParkingLotScene");
+}
 
       console.log(
         "Camera follow resumed. Player at:",
@@ -675,42 +682,105 @@ export default class GameScene extends Phaser.Scene {
 
   // --- OTHER SCENE METHODS ---
 
-  initHtmlMinimap(map) {
-    this.minimapContainer = document.getElementById("minimap");
-    if (!this.minimapContainer) {
-      console.error("Minimap HTML element not found!");
-      return;
-    }
-    this.mapWidth = map.widthInPixels;
-    this.mapHeight = map.heightInPixels;
-    minimapNodes.forEach((node) => {
-      const dot = document.createElement("div");
-      dot.style.position = "absolute";
-      dot.style.width = "10px";
-      dot.style.height = "10px";
-      dot.style.borderRadius = "50%";
-      dot.style.backgroundColor = `#${node.color
-        .toString(16)
-        .padStart(6, "0")}`;
-      dot.style.border = "1px solid white";
-      dot.style.transform = "translate(-50%, -50%)";
-      dot.style.left = `${(node.x / this.mapWidth) * 100}%`;
-      dot.style.top = `${(node.y / this.mapHeight) * 100}%`;
-      this.minimapContainer.appendChild(dot);
-    });
-    const playerDot = document.createElement("div");
-    playerDot.style.position = "absolute";
-    playerDot.style.width = "8px";
-    playerDot.style.height = "8px";
-    playerDot.style.borderRadius = "50%";
-    playerDot.style.backgroundColor = "black";
-    playerDot.style.border = "2px solid yellow";
-    playerDot.style.transform = "translate(-50%, -50%)";
-    playerDot.style.zIndex = "10";
-    playerDot.style.display = "none";
-    this.minimapContainer.appendChild(playerDot);
-    this.playerDotElement = playerDot;
+  //import { isTaskCompleted } from "../state/traits.js"; // make sure this import exists
+
+initHtmlMinimap(map) {
+  this.minimapContainer = document.getElementById("minimap");
+  if (!this.minimapContainer) {
+    console.error("❌ Minimap HTML element not found!");
+    return;
   }
+
+  this.mapWidth = map.widthInPixels;
+  this.mapHeight = map.heightInPixels;
+
+  console.log("🧭 Initializing HTML Minimap with map size:", this.mapWidth, this.mapHeight);
+
+  minimapNodes.forEach((node) => {
+  const dot = document.createElement("div");
+  dot.style.position = "absolute";
+  dot.style.width = "10px";
+  dot.style.height = "10px";
+  dot.style.borderRadius = "50%";
+  dot.style.border = "1px solid white";
+  dot.style.transform = "translate(-50%, -50%)";
+  dot.style.left = `${(node.x / this.mapWidth) * 100}%`;
+  dot.style.top = `${(node.y / this.mapHeight) * 100}%`;
+  dot.dataset.key = node.key;
+  dot.classList.add("minimap-dot");
+    // ✅ Set color based on completion
+    const sceneDone = isTaskCompleted(node.key);
+    if (sceneDone) {
+      dotstyle.backgroundColor = "green";
+      dot.style.boxShadow = "0 0 8px 2px rgba(0,255,0,0.7)";
+    } else {
+      dot.style.backgroundColor = "red";
+       dot.style.boxShadow = "none";
+    } 
+   
+
+    this.minimapContainer.appendChild(dot);
+
+    console.log(`📍 Minimap dot created for scene "${node.key}" at`, {
+      x: node.x,
+      y: node.y,
+      color: dot.style.backgroundColor,
+    });
+  });
+
+  // 🧍 Player dot setup
+  const playerDot = document.createElement("div");
+  playerDot.style.position = "absolute";
+  playerDot.style.width = "8px";
+  playerDot.style.height = "8px";
+  playerDot.style.borderRadius = "50%";
+  playerDot.style.backgroundColor = "black";
+  playerDot.style.border = "2px solid yellow";
+  playerDot.style.transform = "translate(-50%, -50%)";
+  playerDot.style.zIndex = "1";
+  playerDot.style.display = "none";
+  playerDot.classList.add("player-dot");
+
+  this.playerDotElement = playerDot;
+    this.minimapContainer.appendChild(playerDot);
+
+
+  console.log("✅ Player dot created successfully.");
+}
+
+updateMinimapDotColor(sceneKey) {
+  const minimap = document.getElementById("minimap");
+  if (!minimap) {
+    console.warn("⚠️ Minimap element not found in DOM!");
+    return;
+  }
+
+  const dots = minimap.querySelectorAll(".minimap-dot");
+  console.log(`🎯 Trying to update minimap dot for scene: "${sceneKey}"`);
+  console.log(`🧮 Found ${dots.length} hotspot dots total.`);
+
+  let matched = false;
+  dots.forEach((dot) => {
+    console.log(`🔹 Dot key = "${dot.dataset.key}", color = ${dot.style.backgroundColor}`);
+    if (dot.dataset.key === sceneKey) {
+      matched = true;
+      console.log(`✅ Match found → changing color to green for scene "${sceneKey}"`);
+      //dot.style.backgroundColor = "green";
+      dot.style.setProperty("background-color", "green", "important");
+dot.style.transition = "background-color 0.4s ease, box-shadow 0.4s ease";
+
+      dot.style.border = "1px solid white";
+      dot.style.boxShadow = "0 0 8px 2px rgba(0,255,0,0.7)";
+      dot.style.zIndex = "5";
+      dot.style.transition = "background-color 0.4s, box-shadow 0.4s";
+    }
+  });
+
+  if (!matched) {
+    console.warn(`🚫 No minimap dot found matching key "${sceneKey}"`);
+  }
+}
+
 
   playBackgroundMusic() {
     // If music is already playing, just update volume if needed

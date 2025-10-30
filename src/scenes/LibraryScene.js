@@ -209,7 +209,14 @@ export default class LibraryScene extends Phaser.Scene {
             if (!zone.triggered) {
               zone.triggered = true; // ✅ prevent retriggering
               console.log("Triggered exit object at", obj.x, obj.y);
+               import("../state/traits.js").then(({ markTaskCompleted }) => {
+        markTaskCompleted("LibraryScene");
+      });
 
+const gameScene = this.scene.get("GameScene");
+      if (gameScene && gameScene.updateMinimapDotColor) {
+        gameScene.updateMinimapDotColor("LibraryScene");
+      }
               // Pause library scene + launch situation
               this.scene.pause();
               this.scene.start("GameScene");

@@ -304,6 +304,12 @@ export default class GardenScene extends Phaser.Scene {
         console.log(
           "Player overlapping exit zone - transitioning to GameScene"
         );
+        markTaskCompleted("GardenScene");  // ⚠️ change this to match your current scene name
+    saveProgress();
+ const gameScene = this.scene.get("GameScene");
+    if (gameScene?.updateMinimapDotColor) {
+      gameScene.updateMinimapDotColor("GardenScene"); // same key
+    }
         this.scene.start("GameScene");
       });
     } else {

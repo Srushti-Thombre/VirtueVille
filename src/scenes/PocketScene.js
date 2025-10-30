@@ -176,6 +176,7 @@ export default class GameScene extends Phaser.Scene {
     } else {
       console.warn("Object layer 'login' not found in map!");
     }
+    
     const exitlayer = map.getObjectLayer("exit");
     if (exitlayer) {
       exitlayer.objects.forEach((obj) => {
@@ -205,7 +206,12 @@ export default class GameScene extends Phaser.Scene {
             if (!zone.triggered) {
               zone.triggered = true; // ✅ prevent retriggering
               console.log("Triggered exit object at", obj.x, obj.y);
-
+//markTaskCompleted("PocketScene");
+       //   saveProgress();
+          const gameScene = this.scene.get("GameScene");
+          if (gameScene?.updateMinimapDotColor) {
+            gameScene.updateMinimapDotColor("PocketScene");
+          }
               // Pause library scene + launch situation
               this.scene.pause();
               this.scene.start("GameScene");
