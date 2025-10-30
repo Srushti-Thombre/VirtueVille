@@ -18,20 +18,27 @@ export default class GardenScene extends Phaser.Scene {
     this.load.tilemapTiledJSON("gardenmap", "maps/Garden.tmj");
     this.load.image("city01", "tilesets/city01.png");
     this.load.image("CityMap", "tilesets/CityMap.png");
-    this.load.atlasXML(
+
+    // Load all character spritesheets
+    this.load.spritesheet(
+      "maleAdventurer",
+      "kenney_toon-characters-1/Male adventurer/Tilesheet/character_maleAdventurer_sheet.png",
+      { frameWidth: 96, frameHeight: 128 }
+    );
+    this.load.spritesheet(
       "femaleAdventurer",
-      "kenney_toon-characters-1/Female adventurer/Tilesheet/character_femaleAdventurer_sheetHD.png",
-      "kenney_toon-characters-1/Female adventurer/Tilesheet/character_femaleAdventurer_sheetHD.xml"
+      "kenney_toon-characters-1/Female adventurer/Tilesheet/character_femaleAdventurer_sheet.png",
+      { frameWidth: 96, frameHeight: 128 }
     );
-    this.load.atlasXML(
-      "femalePerson",
-      "kenney_toon-characters-1/Female person/Tilesheet/character_femalePerson_sheetHD.png",
-      "kenney_toon-characters-1/Female person/Tilesheet/character_femalePerson_sheetHD.xml"
-    );
-    this.load.atlasXML(
+    this.load.spritesheet(
       "malePerson",
-      "kenney_toon-characters-1/Male person/Tilesheet/character_malePerson_sheetHD.png",
-      "kenney_toon-characters-1/Male person/Tilesheet/character_malePerson_sheetHD.xml"
+      "kenney_toon-characters-1/Male person/Tilesheet/character_malePerson_sheet.png",
+      { frameWidth: 96, frameHeight: 128 }
+    );
+    this.load.spritesheet(
+      "femalePerson",
+      "kenney_toon-characters-1/Female person/Tilesheet/character_femalePerson_sheet.png",
+      { frameWidth: 96, frameHeight: 128 }
     );
   }
 
@@ -76,8 +83,14 @@ export default class GardenScene extends Phaser.Scene {
       }
     }
 
+    // Get selected character
+    const playerCharacter =
+      this.registry.get("playerCharacter") ||
+      localStorage.getItem("selectedCharacter") ||
+      "maleAdventurer";
+
     this.player = this.physics.add
-      .sprite(spawnX, spawnY, "player", 0)
+      .sprite(spawnX, spawnY, playerCharacter, 0)
       .setScale(0.35);
     this.player.setCollideWorldBounds(true);
     this.player.setDepth(150);
@@ -88,6 +101,11 @@ export default class GardenScene extends Phaser.Scene {
     if (groundLayer) groundLayer.setDepth(0);
     if (wallLayer) wallLayer.setDepth(100);
     if (treeLayer) treeLayer.setDepth(300);
+
+    // Ensure UIScene1 is running for HUD buttons
+    if (!this.scene.isActive("UIScene1")) {
+      this.scene.launch("UIScene1");
+    }
 
     // Enhanced camera follow
     this.cameras.main.setRoundPixels(false);
@@ -496,37 +514,42 @@ export default class GardenScene extends Phaser.Scene {
 
   createAnimations() {
     const g = this.anims;
-    if (!g.exists("walk-down")) {
-      g.create({
-        key: "walk-down",
-        frames: g.generateFrameNames("player", { start: 22, end: 23 }),
-        frameRate: 8,
-        repeat: -1,
-      });
-    }
-    if (!g.exists("walk-left")) {
-      g.create({
-        key: "walk-left",
-        frames: g.generateFrameNames("player", { start: 16, end: 18 }),
-        frameRate: 8,
-        repeat: -1,
-      });
-    }
-    if (!g.exists("walk-right")) {
-      g.create({
-        key: "walk-right",
-        frames: g.generateFrameNames("player", { start: 19, end: 21 }),
-        frameRate: 8,
-        repeat: -1,
-      });
-    }
-    if (!g.exists("walk-up")) {
-      g.create({
-        key: "walk-up",
-        frames: g.generateFrameNames("player", { start: 22, end: 23 }),
-        frameRate: 8,
-        repeat: -1,
-      });
-    }
+
+    // Get the selected character
+    const playerCharacter =
+      this.registry.get("playerCharacter") ||
+      localStorage.getItem("selectedCharacter") ||
+      "maleAdventurer";
+
+    // Destroy existing animations if they exist
+    if (g.exists("walk-down")) g.remove("walk-down");
+    if (g.exists("walk-left")) g.remove("walk-left");
+    if (g.exists("walk-right")) g.remove("walk-right");
+    if (g.exists("walk-up")) g.remove("walk-up");
+
+    g.create({
+      key: "walk-down",
+      frames: g.generateFrameNames(playerCharacter, { start: 22, end: 23 }),
+      frameRate: 8,
+      repeat: -1,
+    });
+    g.create({
+      key: "walk-left",
+      frames: g.generateFrameNames(playerCharacter, { start: 16, end: 18 }),
+      frameRate: 8,
+      repeat: -1,
+    });
+    g.create({
+      key: "walk-right",
+      frames: g.generateFrameNames(playerCharacter, { start: 19, end: 21 }),
+      frameRate: 8,
+      repeat: -1,
+    });
+    g.create({
+      key: "walk-up",
+      frames: g.generateFrameNames(playerCharacter, { start: 22, end: 23 }),
+      frameRate: 8,
+      repeat: -1,
+    });
   }
 }

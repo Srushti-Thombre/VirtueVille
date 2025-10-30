@@ -13,10 +13,25 @@ export default class GameScene extends Phaser.Scene {
     this.load.image("Sample", "tilesets/Sample.png");
     this.load.image("city01", "tilesets/city01.png");
 
-    // --- player sprite sheet ---
+    // --- Load all character spritesheets ---
     this.load.spritesheet(
-      "player",
+      "maleAdventurer",
       "kenney_toon-characters-1/Male adventurer/Tilesheet/character_maleAdventurer_sheet.png",
+      { frameWidth: 96, frameHeight: 128 }
+    );
+    this.load.spritesheet(
+      "femaleAdventurer",
+      "kenney_toon-characters-1/Female adventurer/Tilesheet/character_femaleAdventurer_sheet.png",
+      { frameWidth: 96, frameHeight: 128 }
+    );
+    this.load.spritesheet(
+      "malePerson",
+      "kenney_toon-characters-1/Male person/Tilesheet/character_malePerson_sheet.png",
+      { frameWidth: 96, frameHeight: 128 }
+    );
+    this.load.spritesheet(
+      "femalePerson",
+      "kenney_toon-characters-1/Female person/Tilesheet/character_femalePerson_sheet.png",
       { frameWidth: 96, frameHeight: 128 }
     );
   }
@@ -52,7 +67,16 @@ export default class GameScene extends Phaser.Scene {
 
     // --- input ---
     this.cursors = this.input.keyboard.createCursorKeys();
-    this.player = this.physics.add.sprite(100, 100, "player", 0).setScale(0.3);
+
+    // Get selected character
+    const playerCharacter =
+      this.registry.get("playerCharacter") ||
+      localStorage.getItem("selectedCharacter") ||
+      "maleAdventurer";
+
+    this.player = this.physics.add
+      .sprite(100, 100, playerCharacter, 0)
+      .setScale(0.3);
     this.player.setCollideWorldBounds(true);
     this.player.body.setSize(this.player.width * 0.6, this.player.height * 0.8);
     this.player.body.setOffset(
@@ -70,6 +94,11 @@ export default class GameScene extends Phaser.Scene {
     this.cameras.main.startFollow(this.player, true, 0.12, 0.12);
     this.cameras.main.setRoundPixels(false);
     this.player.setCollideWorldBounds(true);
+
+    // Ensure UIScene1 is running for HUD buttons
+    if (!this.scene.isActive("UIScene1")) {
+      this.scene.launch("UIScene1");
+    }
 
     // --- animations ---
     this.createAnimations();
@@ -128,6 +157,11 @@ export default class GameScene extends Phaser.Scene {
                   },
                 ],
               });
+
+              // Bring SituationScene1 to top after a small delay to ensure it's created
+              this.time.delayedCall(100, () => {
+                this.scene.bringToTop("SituationScene1");
+              });
             }
           },
           null,
@@ -180,27 +214,51 @@ export default class GameScene extends Phaser.Scene {
   }
 
   createAnimations() {
+    // Get the selected character
+    const playerCharacter =
+      this.registry.get("playerCharacter") ||
+      localStorage.getItem("selectedCharacter") ||
+      "maleAdventurer";
+
+    // Destroy existing animations if they exist
+    if (this.anims.exists("walk-down")) this.anims.remove("walk-down");
+    if (this.anims.exists("walk-left")) this.anims.remove("walk-left");
+    if (this.anims.exists("walk-right")) this.anims.remove("walk-right");
+    if (this.anims.exists("walk-up")) this.anims.remove("walk-up");
+
     this.anims.create({
       key: "walk-down",
-      frames: this.anims.generateFrameNumbers("player", { start: 22, end: 23 }),
+      frames: this.anims.generateFrameNumbers(playerCharacter, {
+        start: 22,
+        end: 23,
+      }),
       frameRate: 8,
       repeat: -1,
     });
     this.anims.create({
       key: "walk-left",
-      frames: this.anims.generateFrameNumbers("player", { start: 16, end: 18 }),
+      frames: this.anims.generateFrameNumbers(playerCharacter, {
+        start: 16,
+        end: 18,
+      }),
       frameRate: 8,
       repeat: -1,
     });
     this.anims.create({
       key: "walk-right",
-      frames: this.anims.generateFrameNumbers("player", { start: 19, end: 21 }),
+      frames: this.anims.generateFrameNumbers(playerCharacter, {
+        start: 19,
+        end: 21,
+      }),
       frameRate: 8,
       repeat: -1,
     });
     this.anims.create({
       key: "walk-up",
-      frames: this.anims.generateFrameNumbers("player", { start: 22, end: 23 }),
+      frames: this.anims.generateFrameNumbers(playerCharacter, {
+        start: 22,
+        end: 23,
+      }),
       frameRate: 8,
       repeat: -1,
     });

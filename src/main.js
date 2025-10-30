@@ -1,6 +1,7 @@
 import * as Phaser from "https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.esm.js";
 
 import CharacterSelectionScene from "./scenes/CharacterSelectionScene.js";
+import TutorialScene from "./scenes/TutorialScene.js";
 import SettingsScene from "./scenes/SettingsScene.js";
 import GameScene from "./scenes/GameScene.js";
 import LibraryScene from "./scenes/LibraryScene.js";
@@ -48,9 +49,10 @@ const config = {
   },
   //
   scene: [
-    GameScene, // Start directly with GameScene
+    CharacterSelectionScene, // Character selection first
+    TutorialScene, // Tutorial after character selection
+    GameScene, // Main game scene
     UIScene1,
-    CharacterSelectionScene, // Available for mid-game character changes
     SettingsScene, // Settings menu
 
     LibraryScene,

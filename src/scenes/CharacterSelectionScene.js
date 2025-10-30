@@ -34,6 +34,21 @@ export default class CharacterSelectionScene extends Phaser.Scene {
     const width = this.cameras.main.width;
     const height = this.cameras.main.height;
 
+    // Store which scenes were active so we can restore them
+    this.activeScenes = [];
+    const sceneManager = this.scene.manager;
+    sceneManager.scenes.forEach((scene) => {
+      if (
+        scene.scene.isActive() &&
+        scene.scene.key !== "CharacterSelectionScene" &&
+        scene.scene.key !== "UIScene1"
+      ) {
+        this.activeScenes.push(scene.scene.key);
+        this.scene.pause(scene.scene.key);
+        console.log(`⏸️ Paused scene: ${scene.scene.key}`);
+      }
+    });
+
     // Set default character if not already selected
     if (
       !this.registry.get("playerCharacter") &&
@@ -43,11 +58,12 @@ export default class CharacterSelectionScene extends Phaser.Scene {
       localStorage.setItem("selectedCharacter", "maleAdventurer");
     }
 
-    // Background
+    // Background with higher depth for overlay
     const bg = this.add.graphics();
     bg.fillGradientStyle(0x667eea, 0x667eea, 0x764ba2, 0x764ba2, 1);
     bg.fillRect(0, 0, width, height);
     bg.setScrollFactor(0);
+    bg.setDepth(5000); // High depth to appear above everything
 
     // Title
     this.add
@@ -60,7 +76,8 @@ export default class CharacterSelectionScene extends Phaser.Scene {
         strokeThickness: 4,
       })
       .setOrigin(0.5)
-      .setScrollFactor(0);
+      .setScrollFactor(0)
+      .setDepth(5001); // Above background
 
     // Character data
     const characters = [
@@ -97,6 +114,7 @@ export default class CharacterSelectionScene extends Phaser.Scene {
       card.lineStyle(3, 0x9c27b0, 1);
       card.strokeRoundedRect(x - 80, y - 100, 160, 280, 15);
       card.setScrollFactor(0);
+      card.setDepth(5001); // Above background
       card.setInteractive(
         new Phaser.Geom.Rectangle(x - 80, y - 100, 160, 280),
         Phaser.Geom.Rectangle.Contains
@@ -106,6 +124,7 @@ export default class CharacterSelectionScene extends Phaser.Scene {
       // Character sprite
       const sprite = this.add.sprite(x, y, char.key, 0).setScale(1.5);
       sprite.setScrollFactor(0);
+      sprite.setDepth(5002); // Above card
 
       // Character name
       this.add
@@ -118,7 +137,8 @@ export default class CharacterSelectionScene extends Phaser.Scene {
           wordWrap: { width: 140 },
         })
         .setOrigin(0.5)
-        .setScrollFactor(0);
+        .setScrollFactor(0)
+        .setDepth(5002); // Above card
 
       // Character description
       this.add
@@ -129,7 +149,8 @@ export default class CharacterSelectionScene extends Phaser.Scene {
           align: "center",
         })
         .setOrigin(0.5)
-        .setScrollFactor(0);
+        .setScrollFactor(0)
+        .setDepth(5002); // Above card
 
       // Hover effects
       card.on("pointerover", () => {
@@ -223,6 +244,7 @@ export default class CharacterSelectionScene extends Phaser.Scene {
     button.fillStyle(0xffffff, 1);
     button.fillRoundedRect(x - 100, y - 25, 200, 50, 25);
     button.setScrollFactor(0);
+    button.setDepth(5003); // Above everything
     button.setInteractive(
       new Phaser.Geom.Rectangle(x - 100, y - 25, 200, 50),
       Phaser.Geom.Rectangle.Contains
@@ -236,7 +258,8 @@ export default class CharacterSelectionScene extends Phaser.Scene {
         fontStyle: "bold",
       })
       .setOrigin(0.5)
-      .setScrollFactor(0);
+      .setScrollFactor(0)
+      .setDepth(5004); // Above button
 
     button.on("pointerover", () => {
       button.clear();
@@ -271,13 +294,39 @@ export default class CharacterSelectionScene extends Phaser.Scene {
         this.registry.set("playerCharacter", this.selectedCharacter);
         localStorage.setItem("selectedCharacter", this.selectedCharacter);
 
-        // Always return to GameScene (mid-game character change)
-        console.log("✅ Restarting GameScene with new character");
-        // Stop this scene
+        // Check if this is first time or mid-game change
+        const tutorialCompleted = localStorage.getItem("tutorialCompleted");
+        const wasInGame = this.activeScenes.length > 0;
+
         this.scene.stop("CharacterSelectionScene");
-        // Stop and restart GameScene to apply new character
-        this.scene.stop("GameScene");
-        this.scene.start("GameScene");
+
+        if (!tutorialCompleted && !wasInGame) {
+          // First time player - show tutorial
+          console.log("✅ Starting Tutorial");
+          this.scene.start("TutorialScene");
+        } else if (wasInGame) {
+          // Mid-game character change - need to restart active scenes to reload sprites
+          console.log(
+            "✅ Restarting scenes with new character:",
+            this.activeScenes
+          );
+
+          // Stop and restart each active scene so they reload with new character
+          this.activeScenes.forEach((sceneKey) => {
+            console.log(`🔄 Restarting scene: ${sceneKey}`);
+            this.scene.stop(sceneKey);
+            this.scene.start(sceneKey);
+          });
+
+          // Make sure UIScene1 is still running
+          if (!this.scene.isActive("UIScene1")) {
+            this.scene.launch("UIScene1");
+          }
+        } else {
+          // Returning player starting fresh
+          console.log("✅ Starting GameScene with new character");
+          this.scene.start("GameScene");
+        }
       }
     });
 

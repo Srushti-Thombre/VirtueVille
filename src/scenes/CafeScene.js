@@ -32,21 +32,26 @@ export default class CafeScene extends Phaser.Scene {
       "public/tilesets/adventurer_tilesheet.png"
     );
 
+    // Load all character spritesheets
     this.load.spritesheet(
-      "player",
+      "maleAdventurer",
       "public/kenney_toon-characters-1/Male adventurer/Tilesheet/character_maleAdventurer_sheet.png",
       { frameWidth: 96, frameHeight: 128 }
     );
-
-    this.load.atlasXML(
+    this.load.spritesheet(
       "femaleAdventurer",
-      "public/kenney_toon-characters-1/Female adventurer/Tilesheet/character_femaleAdventurer_sheetHD.png",
-      "kenney_toon-characters-1/Female adventurer/Tilesheet/character_femaleAdventurer_sheetHD.xml"
+      "public/kenney_toon-characters-1/Female adventurer/Tilesheet/character_femaleAdventurer_sheet.png",
+      { frameWidth: 96, frameHeight: 128 }
     );
-    this.load.atlasXML(
+    this.load.spritesheet(
       "malePerson",
-      "kenney_toon-characters-1/Male person/Tilesheet/character_malePerson_sheetHD.png",
-      "kenney_toon-characters-1/Male person/Tilesheet/character_malePerson_sheetHD.xml"
+      "kenney_toon-characters-1/Male person/Tilesheet/character_malePerson_sheet.png",
+      { frameWidth: 96, frameHeight: 128 }
+    );
+    this.load.spritesheet(
+      "femalePerson",
+      "kenney_toon-characters-1/Female person/Tilesheet/character_femalePerson_sheet.png",
+      { frameWidth: 96, frameHeight: 128 }
     );
   }
 
@@ -72,8 +77,15 @@ export default class CafeScene extends Phaser.Scene {
     const spawnObj = playerSpawnLayer.objects.find(
       (o) => o.name === "playerSpawn"
     );
+
+    // Get selected character
+    const playerCharacter =
+      this.registry.get("playerCharacter") ||
+      localStorage.getItem("selectedCharacter") ||
+      "maleAdventurer";
+
     this.player = this.physics.add
-      .sprite(spawnObj.x, spawnObj.y, "player", 0)
+      .sprite(spawnObj.x, spawnObj.y, playerCharacter, 0)
       .setCollideWorldBounds(true);
     this.player.setDisplaySize(60, 90);
 
@@ -97,6 +109,11 @@ export default class CafeScene extends Phaser.Scene {
     this.cameras.main.setRoundPixels(false);
     this.cameras.main.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
     this.physics.world.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
+
+    // Ensure UIScene1 is running for HUD buttons
+    if (!this.scene.isActive("UIScene1")) {
+      this.scene.launch("UIScene1");
+    }
 
     this.cursors = this.input.keyboard.createCursorKeys();
     this.interactKey = this.input.keyboard.addKey(
@@ -196,27 +213,51 @@ export default class CafeScene extends Phaser.Scene {
   }
 
   createPlayerAnimations() {
+    // Get the selected character
+    const playerCharacter =
+      this.registry.get("playerCharacter") ||
+      localStorage.getItem("selectedCharacter") ||
+      "maleAdventurer";
+
+    // Destroy existing animations if they exist
+    if (this.anims.exists("left")) this.anims.remove("left");
+    if (this.anims.exists("right")) this.anims.remove("right");
+    if (this.anims.exists("up")) this.anims.remove("up");
+    if (this.anims.exists("down")) this.anims.remove("down");
+
     this.anims.create({
       key: "left",
-      frames: this.anims.generateFrameNumbers("player", { start: 16, end: 18 }),
+      frames: this.anims.generateFrameNumbers(playerCharacter, {
+        start: 16,
+        end: 18,
+      }),
       frameRate: 10,
       repeat: -1,
     });
     this.anims.create({
       key: "right",
-      frames: this.anims.generateFrameNumbers("player", { start: 19, end: 21 }),
+      frames: this.anims.generateFrameNumbers(playerCharacter, {
+        start: 19,
+        end: 21,
+      }),
       frameRate: 10,
       repeat: -1,
     });
     this.anims.create({
       key: "up",
-      frames: this.anims.generateFrameNumbers("player", { start: 22, end: 23 }),
+      frames: this.anims.generateFrameNumbers(playerCharacter, {
+        start: 22,
+        end: 23,
+      }),
       frameRate: 10,
       repeat: -1,
     });
     this.anims.create({
       key: "down",
-      frames: this.anims.generateFrameNumbers("player", { start: 22, end: 23 }),
+      frames: this.anims.generateFrameNumbers(playerCharacter, {
+        start: 22,
+        end: 23,
+      }),
       frameRate: 10,
       repeat: -1,
     });

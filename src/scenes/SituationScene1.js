@@ -21,8 +21,19 @@ export default class SituationScene1 extends Phaser.Scene {
     // Initialize virtue system and ensure UI is running
     VirtueSystem.initScene(this);
 
+    // Bring this scene to the top to ensure visibility
+    this.scene.bringToTop();
+
     // --- Dark overlay background ---
-    this.add.rectangle(width / 2, height / 2, width, height, 0x000000, 0.6);
+    const overlay = this.add.rectangle(
+      width / 2,
+      height / 2,
+      width,
+      height,
+      0x000000,
+      0.6
+    );
+    overlay.setDepth(5000);
 
     // --- Popup background box ---
     const boxWidth = 600;
@@ -31,6 +42,7 @@ export default class SituationScene1 extends Phaser.Scene {
     const boxY = height / 2 - boxHeight / 2;
 
     const popupBg = this.add.graphics();
+    popupBg.setDepth(5001);
     popupBg.fillStyle(0x222244, 0.95); // dark bluish
     popupBg.fillRoundedRect(boxX, boxY, boxWidth, boxHeight, 20);
     popupBg.lineStyle(4, 0xffffff, 1);
@@ -43,14 +55,17 @@ export default class SituationScene1 extends Phaser.Scene {
         fontStyle: "bold",
         color: "#ffcc00",
       })
-      .setOrigin(0.5);
+      .setOrigin(0.5)
+      .setDepth(5002);
 
     // --- Situation message ---
-    this.add.text(boxX + 20, boxY + 70, this.message, {
-      fontSize: "18px",
-      color: "#ffffff",
-      wordWrap: { width: boxWidth - 40 },
-    });
+    this.add
+      .text(boxX + 20, boxY + 70, this.message, {
+        fontSize: "18px",
+        color: "#ffffff",
+        wordWrap: { width: boxWidth - 40 },
+      })
+      .setDepth(5002);
 
     // --- Options ---
     let y = boxY + 160;
@@ -62,6 +77,7 @@ export default class SituationScene1 extends Phaser.Scene {
           backgroundColor: "#333355",
           padding: { left: 10, right: 10, top: 5, bottom: 5 },
         })
+        .setDepth(5003)
         .setInteractive({ useHandCursor: true })
         .on("pointerover", () => {
           optionText.setStyle({ color: "#ffffff", backgroundColor: "#444477" });
@@ -70,7 +86,7 @@ export default class SituationScene1 extends Phaser.Scene {
           optionText.setStyle({ color: "#00e6e6", backgroundColor: "#333355" });
         })
         .on("pointerdown", async () => {
-          console.log('SituationScene1: option selected ->', opt);
+          console.log("SituationScene1: option selected ->", opt);
 
           // Apply traits if present
           if (opt.traits) {
@@ -85,13 +101,19 @@ export default class SituationScene1 extends Phaser.Scene {
 
           // Award virtue points if defined
           if (typeof opt.points !== "undefined") {
-            console.log(`SituationScene1: awarding ${opt.points} points for reason: ${opt.reason}`);
-            VirtueSystem.awardPoints(this, opt.points, opt.reason || "Choice made");
+            console.log(
+              `SituationScene1: awarding ${opt.points} points for reason: ${opt.reason}`
+            );
+            VirtueSystem.awardPoints(
+              this,
+              opt.points,
+              opt.reason || "Choice made"
+            );
           }
 
           // Close popup and resume PocketScene
           this.scene.stop("SituationScene1"); // stop popup
-          this.scene.resume("PocketScene");   // resume main gameplay
+          this.scene.resume("PocketScene"); // resume main gameplay
         });
 
       y += 50;
