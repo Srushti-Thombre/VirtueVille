@@ -52,17 +52,14 @@ export default class GameScene extends Phaser.Scene {
     const objects1 = map.createLayer("exit", tilesets, 0, 0);
     walls.setCollisionByExclusion([-1]);
 
-    // Provide minimap bounds to the MinimapScene so it can map world -> minimap coordinates
+    // Provide minimap bounds to the MinimapScene
     try {
       this.registry.set("minimapBounds", {
         worldWidth: map.widthInPixels,
         worldHeight: map.heightInPixels,
       });
     } catch (e) {
-      console.warn(
-        "Unable to set minimapBounds registry key in PocketScene:",
-        e
-      );
+      console.warn("Unable to set minimapBounds registry key in PocketScene:", e);
     }
 
     // --- input ---
@@ -85,51 +82,41 @@ export default class GameScene extends Phaser.Scene {
     );
 
     this.physics.add.collider(this.player, walls);
-    //this.physics.add.collider(this.player, furnitures);
-    //this.physics.add.collider(this.player, props);
-    // Spawn player inside library
-    //this.player = this.physics.add.sprite(this.startX, this.startY, 'player');
 
-    // Enhanced camera follow
+    // --- CAMERA: ZOOMED IN 2X ---
     this.cameras.main.startFollow(this.player, true, 0.12, 0.12);
+    this.cameras.main.setZoom(2);           // ZOOM 2X
     this.cameras.main.setRoundPixels(false);
     this.player.setCollideWorldBounds(true);
 
-    // Ensure UIScene1 is running for HUD buttons
+    // Ensure UIScene1 is running
     if (!this.scene.isActive("UIScene1")) {
       this.scene.launch("UIScene1");
     }
 
     // --- animations ---
     this.createAnimations();
-    //this.libraryDoor = this.physics.add.staticSprite(500, 200, null).setSize(50, 100);
 
-    // Collider with door
-    /*this.physics.add.overlap(this.player, this.libraryDoor, () => {
-        this.scene.start("LibraryScene");
-    }, null, this);*/
+    // --- POCKET OBJECTS (Situation Trigger) ---
     const pocketlayer = map.getObjectLayer("pocket");
     if (pocketlayer) {
       pocketlayer.objects.forEach((obj) => {
-        // Create invisible rectangle zone at object's coordinates
         const zone = this.add
           .zone(obj.x, obj.y, obj.width || 32, obj.height || 32)
-          .setOrigin(0, 1); // Tiled Y origin is bottom-left
+          .setOrigin(0, 1);
         this.physics.world.enable(zone);
         zone.body.setAllowGravity(false);
         zone.body.setImmovable(true);
         zone.triggered = false;
 
-        // Overlap detection
         this.physics.add.overlap(
           this.player,
           zone,
           () => {
             if (!zone.triggered && !this.scene.isActive("SituationScene1")) {
-              zone.triggered = true; // ✅ prevent retriggering
+              zone.triggered = true;
               console.log("Triggered pocket object at", obj.x, obj.y);
 
-              // Pause library scene + launch situation
               this.scene.pause();
               this.scene.launch("SituationScene1", {
                 taskId: "pocketTask",
@@ -163,7 +150,6 @@ export default class GameScene extends Phaser.Scene {
                 ],
               });
 
-              // Bring SituationScene1 to top after a small delay to ensure it's created
               this.time.delayedCall(100, () => {
                 this.scene.bringToTop("SituationScene1");
               });
@@ -174,45 +160,47 @@ export default class GameScene extends Phaser.Scene {
         );
       });
     } else {
-      console.warn("Object layer 'login' not found in map!");
+      console.warn("Object layer 'pocket' not found in map!");
     }
-    
+
+    // --- EXIT ZONE + LABELS ---
     const exitlayer = map.getObjectLayer("exit");
     if (exitlayer) {
       exitlayer.objects.forEach((obj) => {
+        // Show label if text exists
         if (obj.text) {
           this.add
             .text(obj.x, obj.y, obj.text.text, {
-              fontSize: `${obj.text.pixelsize || 16}px`, // fallback if not defined
+              fontSize: `${obj.text.pixelsize || 16}px`,
               color: obj.text.color || "#ffffff",
               fontFamily: obj.text.fontfamily || "Arial",
               wordWrap: { width: obj.width },
             })
-            .setOrigin(0, 0); // match Tiled's bottom-left origin
+            .setOrigin(0, 0);
         }
-        // Create invisible rectangle zone at object's coordinates
+
+        // Exit zone
         const zone = this.add
           .zone(obj.x, obj.y, obj.width || 32, obj.height || 32)
-          .setOrigin(0, 1); // Tiled Y origin is bottom-left
+          .setOrigin(0, 1);
         this.physics.world.enable(zone);
         zone.body.setAllowGravity(false);
         zone.body.setImmovable(true);
         zone.triggered = false;
-        // Overlap detection
+
         this.physics.add.overlap(
           this.player,
           zone,
           () => {
             if (!zone.triggered) {
-              zone.triggered = true; // ✅ prevent retriggering
+              zone.triggered = true;
               console.log("Triggered exit object at", obj.x, obj.y);
-//markTaskCompleted("PocketScene");
-       //   saveProgress();
-          const gameScene = this.scene.get("GameScene");
-          if (gameScene?.updateMinimapDotColor) {
-            gameScene.updateMinimapDotColor("PocketScene");
-          }
-              // Pause library scene + launch situation
+
+              const gameScene = this.scene.get("GameScene");
+              if (gameScene?.updateMinimapDotColor) {
+                gameScene.updateMinimapDotColor("PocketScene");
+              }
+
               this.scene.pause();
               this.scene.start("GameScene");
             }
@@ -225,13 +213,11 @@ export default class GameScene extends Phaser.Scene {
   }
 
   createAnimations() {
-    // Get the selected character
     const playerCharacter =
       this.registry.get("playerCharacter") ||
       localStorage.getItem("selectedCharacter") ||
       "maleAdventurer";
 
-    // Destroy existing animations if they exist
     if (this.anims.exists("walk-down")) this.anims.remove("walk-down");
     if (this.anims.exists("walk-left")) this.anims.remove("walk-left");
     if (this.anims.exists("walk-right")) this.anims.remove("walk-right");
@@ -239,44 +225,31 @@ export default class GameScene extends Phaser.Scene {
 
     this.anims.create({
       key: "walk-down",
-      frames: this.anims.generateFrameNumbers(playerCharacter, {
-        start: 22,
-        end: 23,
-      }),
+      frames: this.anims.generateFrameNumbers(playerCharacter, { start: 22, end: 23 }),
       frameRate: 8,
       repeat: -1,
     });
     this.anims.create({
       key: "walk-left",
-      frames: this.anims.generateFrameNumbers(playerCharacter, {
-        start: 16,
-        end: 18,
-      }),
+      frames: this.anims.generateFrameNumbers(playerCharacter, { start: 16, end: 18 }),
       frameRate: 8,
       repeat: -1,
     });
     this.anims.create({
       key: "walk-right",
-      frames: this.anims.generateFrameNumbers(playerCharacter, {
-        start: 19,
-        end: 21,
-      }),
+      frames: this.anims.generateFrameNumbers(playerCharacter, { start: 19, end: 21 }),
       frameRate: 8,
       repeat: -1,
     });
     this.anims.create({
       key: "walk-up",
-      frames: this.anims.generateFrameNumbers(playerCharacter, {
-        start: 22,
-        end: 23,
-      }),
+      frames: this.anims.generateFrameNumbers(playerCharacter, { start: 22, end: 23 }),
       frameRate: 8,
       repeat: -1,
     });
   }
 
   update() {
-    //console.log(`Player position → X: ${Math.round(this.player.x)}, Y: ${Math.round(this.player.y)}`)
     if (!this.player || !this.player.body) return;
     const speed = 100;
     const body = this.player.body;
@@ -310,7 +283,8 @@ export default class GameScene extends Phaser.Scene {
     } else {
       this.player.anims.stop();
     }
-    // Update global player position for the minimap every frame
+
+    // Update minimap position
     try {
       this.registry.set("playerPos", { x: this.player.x, y: this.player.y });
     } catch (e) {
