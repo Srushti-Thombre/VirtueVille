@@ -293,10 +293,28 @@ class ApartmentHallwayScene extends Phaser.Scene {
         options: [
           {
             text: "Look under the nearby potted plant and continue helping him.",
+            points: 10,
+            reason: "Helping find the key",
+            traits: { empathy: 2, responsibility: 2 },
           },
-          { text: "Yes, you can come inside." },
-          { text: "No, I don’t trust you." },
-          { text: "Sorry, I can't help right now." },
+          {
+            text: "Yes, you can come inside.",
+            points: 15,
+            reason: "Showing trust and hospitality",
+            traits: { empathy: 3, courage: 1 },
+          },
+          {
+            text: "No, I don't trust you.",
+            points: -5,
+            reason: "Being unwelcoming",
+            traits: { fear: 2, selfishness: 1 },
+          },
+          {
+            text: "Sorry, I can't help right now.",
+            points: 0,
+            reason: "Being neutral",
+            traits: { responsibility: -1 },
+          },
         ],
         onChoice: (choiceIndex) => {
           console.log("Player chose option", choiceIndex);
@@ -327,6 +345,11 @@ class ApartmentHallwayScene extends Phaser.Scene {
           this.scene.resume();
           this.neighbor.dialogueState = "IDLE";
         },
+      });
+      
+      // Bring DialogueScene to top after a small delay to ensure it's created
+      this.time.delayedCall(100, () => {
+        this.scene.bringToTop("DialogueScene");
       });
 
       this.scene.pause();

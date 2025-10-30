@@ -53,6 +53,12 @@ class UIScene1 extends Phaser.Scene {
     // Add Help Button
     this.createHelpButton();
 
+    // Add Dashboard Button
+    this.createDashboardButton();
+
+    // Add Logout Button
+    this.createLogoutButton();
+
     this.registry.events.on("changedata-score", this.updateScore, this);
     this.scene.bringToTop(); // bring UIScene graphics to top layer
   }
@@ -535,6 +541,174 @@ class UIScene1 extends Phaser.Scene {
       alpha: 1,
       duration: 300,
       ease: "Back.easeOut",
+    });
+  }
+
+  createDashboardButton() {
+    const width = this.cameras.main.width;
+    const height = this.cameras.main.height;
+
+    // Position at bottom-left, next to help button
+    const buttonX = 290;
+    const buttonY = height - 50;
+    const buttonWidth = 120;
+    const buttonHeight = 40;
+
+    // Dashboard button background
+    const buttonBg = this.add.graphics();
+    buttonBg.fillGradientStyle(0x16a085, 0x16a085, 0x1abc9c, 0x1abc9c, 1);
+    buttonBg.fillRoundedRect(buttonX, buttonY, buttonWidth, buttonHeight, 10);
+    buttonBg.lineStyle(2, 0x2ecc71, 1);
+    buttonBg.strokeRoundedRect(buttonX, buttonY, buttonWidth, buttonHeight, 10);
+    buttonBg.setScrollFactor(0);
+    buttonBg.setDepth(1000);
+    buttonBg.setInteractive(
+      new Phaser.Geom.Rectangle(buttonX, buttonY, buttonWidth, buttonHeight),
+      Phaser.Geom.Rectangle.Contains
+    );
+
+    // Button text
+    const buttonText = this.add
+      .text(buttonX + buttonWidth / 2, buttonY + 10, "📊 Dashboard", {
+        fontFamily: "Poppins, Arial, sans-serif",
+        fontSize: "14px",
+        fill: "#ffffff",
+        fontStyle: "bold",
+      })
+      .setOrigin(0.5, 0)
+      .setScrollFactor(0)
+      .setDepth(1001);
+
+    // Hover effects
+    buttonBg.on("pointerover", () => {
+      buttonBg.clear();
+      buttonBg.fillGradientStyle(0x1fb896, 0x1fb896, 0x26d9ab, 0x26d9ab, 1);
+      buttonBg.fillRoundedRect(buttonX, buttonY, buttonWidth, buttonHeight, 10);
+      buttonBg.lineStyle(3, 0x3be9c1, 1);
+      buttonBg.strokeRoundedRect(buttonX, buttonY, buttonWidth, buttonHeight, 10);
+
+      this.tweens.add({
+        targets: buttonText,
+        scale: 1.1,
+        duration: 200,
+        ease: "Back.easeOut",
+      });
+    });
+
+    buttonBg.on("pointerout", () => {
+      buttonBg.clear();
+      buttonBg.fillGradientStyle(0x16a085, 0x16a085, 0x1abc9c, 0x1abc9c, 1);
+      buttonBg.fillRoundedRect(buttonX, buttonY, buttonWidth, buttonHeight, 10);
+      buttonBg.lineStyle(2, 0x2ecc71, 1);
+      buttonBg.strokeRoundedRect(buttonX, buttonY, buttonWidth, buttonHeight, 10);
+
+      this.tweens.add({
+        targets: buttonText,
+        scale: 1,
+        duration: 200,
+        ease: "Back.easeIn",
+      });
+    });
+
+    // Click handler - Open dashboard in new tab
+    buttonBg.on("pointerdown", () => {
+      console.log("✅ Opening dashboard");
+      window.open("/dashboard.html", "_blank");
+    });
+  }
+
+  createLogoutButton() {
+    const width = this.cameras.main.width;
+    const height = this.cameras.main.height;
+
+    // Position next to dashboard button
+    const buttonX = 420;
+    const buttonY = height - 50;
+    const buttonWidth = 100;
+    const buttonHeight = 40;
+
+    // Logout button background
+    const buttonBg = this.add.graphics();
+    buttonBg.fillGradientStyle(0xc0392b, 0xc0392b, 0xe74c3c, 0xe74c3c, 1);
+    buttonBg.fillRoundedRect(buttonX, buttonY, buttonWidth, buttonHeight, 10);
+    buttonBg.lineStyle(2, 0xe67e73, 1);
+    buttonBg.strokeRoundedRect(buttonX, buttonY, buttonWidth, buttonHeight, 10);
+    buttonBg.setScrollFactor(0);
+    buttonBg.setDepth(1000);
+    buttonBg.setInteractive(
+      new Phaser.Geom.Rectangle(buttonX, buttonY, buttonWidth, buttonHeight),
+      Phaser.Geom.Rectangle.Contains
+    );
+
+    // Button text
+    const buttonText = this.add
+      .text(buttonX + buttonWidth / 2, buttonY + 10, "🚪 Logout", {
+        fontFamily: "Poppins, Arial, sans-serif",
+        fontSize: "14px",
+        fill: "#ffffff",
+        fontStyle: "bold",
+      })
+      .setOrigin(0.5, 0)
+      .setScrollFactor(0)
+      .setDepth(1001);
+
+    // Hover effects
+    buttonBg.on("pointerover", () => {
+      buttonBg.clear();
+      buttonBg.fillGradientStyle(0xd44637, 0xd44637, 0xf15b4d, 0xf15b4d, 1);
+      buttonBg.fillRoundedRect(buttonX, buttonY, buttonWidth, buttonHeight, 10);
+      buttonBg.lineStyle(3, 0xf39c8f, 1);
+      buttonBg.strokeRoundedRect(buttonX, buttonY, buttonWidth, buttonHeight, 10);
+
+      this.tweens.add({
+        targets: buttonText,
+        scale: 1.1,
+        duration: 200,
+        ease: "Back.easeOut",
+      });
+    });
+
+    buttonBg.on("pointerout", () => {
+      buttonBg.clear();
+      buttonBg.fillGradientStyle(0xc0392b, 0xc0392b, 0xe74c3c, 0xe74c3c, 1);
+      buttonBg.fillRoundedRect(buttonX, buttonY, buttonWidth, buttonHeight, 10);
+      buttonBg.lineStyle(2, 0xe67e73, 1);
+      buttonBg.strokeRoundedRect(buttonX, buttonY, buttonWidth, buttonHeight, 10);
+
+      this.tweens.add({
+        targets: buttonText,
+        scale: 1,
+        duration: 200,
+        ease: "Back.easeIn",
+      });
+    });
+
+    // Click handler - Logout with confirmation
+    buttonBg.on("pointerdown", async () => {
+      const confirmLogout = confirm("Are you sure you want to logout?");
+      if (confirmLogout) {
+        try {
+          console.log("✅ Logging out...");
+          const response = await fetch("/api/logout", {
+            method: "POST",
+            credentials: "same-origin",
+          });
+
+          if (response.ok) {
+            // Clear local storage
+            localStorage.removeItem("virtueVille_user");
+            localStorage.removeItem("virtueVille_save");
+            
+            // Redirect to login page
+            window.location.href = "/auth.html";
+          } else {
+            alert("Failed to logout. Please try again.");
+          }
+        } catch (error) {
+          console.error("Logout error:", error);
+          alert("Failed to logout. Please try again.");
+        }
+      }
     });
   }
 

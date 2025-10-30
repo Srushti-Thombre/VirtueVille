@@ -1,6 +1,7 @@
 import * as Phaser from "https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.esm.js";
-import { isTaskCompleted, markTaskCompleted } from "../state/traits.js";
+import { isTaskCompleted, markTaskCompleted, traits, saveProgress } from "../state/traits.js";
 import { VirtueSystem } from "../state/VirtueSystem.js";
+import { DilemmaStyles } from "../utils/dilemmaStyles.js";
 
 export default class GardenScene extends Phaser.Scene {
   constructor() {
@@ -316,62 +317,68 @@ export default class GardenScene extends Phaser.Scene {
   showQuiz() {
     this.quizActive = true;
 
-    // Create quiz background with proper scroll factor - SMALLER SIZE
+    // Create quiz background with proper scroll factor - Using unified design
     const cam = this.cameras.main;
-    const boxWidth = 252; // 420 * 0.6
-    const boxHeight = 204; // 340 * 0.6
+    const boxWidth = 320;
+    const boxHeight = 300;
     const centerX = cam.width / 2;
     const centerY = cam.height / 2;
     const boxX = centerX - boxWidth / 2;
     const boxY = centerY - boxHeight / 2;
 
     this.quizBox = this.add.graphics().setDepth(999).setScrollFactor(0);
-    this.quizBox.fillStyle(0xffffff, 1);
-    this.quizBox.fillRoundedRect(boxX, boxY, boxWidth, boxHeight, 8);
-    this.quizBox.lineStyle(2, 0x000000, 1);
-    this.quizBox.strokeRoundedRect(boxX, boxY, boxWidth, boxHeight, 8);
+    this.quizBox.fillStyle(DilemmaStyles.modal.backgroundColor, DilemmaStyles.modal.backgroundAlpha);
+    this.quizBox.fillRoundedRect(boxX, boxY, boxWidth, boxHeight, DilemmaStyles.modal.borderRadius);
+    this.quizBox.lineStyle(DilemmaStyles.modal.borderWidth, DilemmaStyles.modal.borderColor, 1);
+    this.quizBox.strokeRoundedRect(boxX, boxY, boxWidth, boxHeight, DilemmaStyles.modal.borderRadius);
 
-    // Question text - smaller
+    // Question text
     this.quizText = this.add
       .text(
-        boxX + 18,
-        boxY + 18,
+        boxX + 20,
+        boxY + 30,
         "Two kids are fighting over who broke the bench, what will you do:",
         {
-          fontSize: "11px",
-          fill: "#000",
-          wordWrap: { width: boxWidth - 36, useAdvancedWrap: true },
-          lineSpacing: 2,
+          fontFamily: DilemmaStyles.question.fontFamily,
+          fontSize: "13px",
+          color: DilemmaStyles.question.color,
+          wordWrap: { width: boxWidth - 40 },
         }
       )
       .setScrollFactor(0)
       .setDepth(1000)
       .setVisible(true);
 
-    // Options - smaller
+    // Options
     const options = [
-      "A. Tell the gardener to scold both kids.",
-      "B. Help fix the bench and calm them down.",
-      "C. Ignore it, it's not your problem.",
-      "D. Calm both kids down and ask what really happened before the gardener arrives.",
+      "Tell the gardener to scold both kids.",
+      "Help fix the bench and calm them down.",
+      "Ignore it, it's not your problem.",
+      "Calm both kids down and ask what really happened before the gardener arrives.",
     ];
 
     if (this.optionTexts) this.optionTexts.forEach((o) => o.destroy());
     this.optionTexts = [];
 
-    let optionY = boxY + 60;
-    const optionGap = 30; // smaller gap
+    let optionY = boxY + 95;
+    const optionGap = 50;
     options.forEach((option, i) => {
       const opt = this.add
-        .text(boxX + 22, optionY, option, {
-          fontSize: "10px",
-          fill: "#000",
-          wordWrap: { width: boxWidth - 48, useAdvancedWrap: true },
+        .text(boxX + 20, optionY, `${i + 1}. ${option}`, {
+          fontFamily: DilemmaStyles.option.fontFamily,
+          fontSize: "11px",
+          color: DilemmaStyles.option.color,
+          backgroundColor: DilemmaStyles.option.backgroundColor,
+          padding: { left: 6, right: 6, top: 4, bottom: 4 },
+          wordWrap: { width: boxWidth - 50 },
           lineSpacing: 2,
         })
         .setInteractive({ useHandCursor: true })
         .setDepth(1001)
         .setScrollFactor(0);
+
+      opt.on("pointerover", () => opt.setStyle(DilemmaStyles.optionHover));
+      opt.on("pointerout", () => opt.setStyle(DilemmaStyles.optionNormal));
 
       opt.on("pointerdown", () =>
         this.handleQuizSelection(String.fromCharCode(65 + i))
@@ -392,62 +399,72 @@ export default class GardenScene extends Phaser.Scene {
 
     this.quizActive = false;
 
-    // Calculate virtue points based on choice
-    let points = 0;
+    // Determine traits and reason based on choice
     let reason = "";
+    let selectedTraits = {};
     const index = selectedKey.charCodeAt(0) - 65;
+    
     switch (index) {
       case 0: // A: Help plant the tree
-        points = 15;
         reason = "Showed responsibility and care for the environment";
+        selectedTraits = { responsibility: 3, empathy: 2, courage: 1 };
         break;
       case 1: // B: Take a photo
-        points = 5;
         reason = "Showed interest but didn't actively participate";
+        selectedTraits = { empathy: 1 };
         break;
       case 2: // C: Watch quietly
-        points = 8;
         reason = "Respectfully observed without interfering";
+        selectedTraits = { empathy: 1, responsibility: 1 };
         break;
       case 3: // D: Leave
-        points = -5;
         reason = "Missed an opportunity to contribute positively";
+        selectedTraits = { selfishness: 2, responsibility: -2 };
         break;
     }
 
-    // Award virtue points
-    VirtueSystem.awardPoints(this, points, reason);
-    console.log(`✅ Garden: Awarded ${points} points - ${reason}`);
+    // Apply traits
+    for (let t in selectedTraits) {
+      traits[t] = (traits[t] || 0) + selectedTraits[t];
+    }
+    saveProgress();
+
+    // Award virtue points (recalculated from traits)
+    VirtueSystem.awardPoints(this, 0, reason);
+    console.log(`✅ Garden: Applied traits:`, selectedTraits);
 
     // Clean up quiz elements
     if (this.quizBox) this.quizBox.destroy();
     if (this.quizText) this.quizText.destroy();
     if (this.optionTexts) this.optionTexts.forEach((o) => o.destroy());
 
-    // Show selection result briefly - smaller
+    // Show selection result briefly
     const cam = this.cameras.main;
+    const boxWidth = 320;
+    const boxHeight = 90;
     const resultBox = this.add.graphics().setDepth(999).setScrollFactor(0);
-    resultBox.fillStyle(0xffffff, 1);
+    resultBox.fillStyle(DilemmaStyles.modal.backgroundColor, DilemmaStyles.modal.backgroundAlpha);
     resultBox.fillRoundedRect(
-      cam.width / 2 - 114,
-      cam.height / 2 - 25,
-      228,
-      50,
-      8
+      cam.width / 2 - boxWidth / 2,
+      cam.height / 2 - boxHeight / 2,
+      boxWidth,
+      boxHeight,
+      DilemmaStyles.modal.borderRadius
     );
-    resultBox.lineStyle(2, 0x000000, 1);
+    resultBox.lineStyle(DilemmaStyles.modal.borderWidth, DilemmaStyles.modal.borderColor, 1);
     resultBox.strokeRoundedRect(
-      cam.width / 2 - 114,
-      cam.height / 2 - 25,
-      228,
-      50,
-      8
+      cam.width / 2 - boxWidth / 2,
+      cam.height / 2 - boxHeight / 2,
+      boxWidth,
+      boxHeight,
+      DilemmaStyles.modal.borderRadius
     );
 
     const resultText = this.add
       .text(cam.width / 2, cam.height / 2, `You chose option ${selectedKey}`, {
-        fontSize: "12px",
-        fill: "#000",
+        fontFamily: DilemmaStyles.question.fontFamily,
+        fontSize: "14px",
+        color: DilemmaStyles.question.color,
         align: "center",
       })
       .setOrigin(0.5)

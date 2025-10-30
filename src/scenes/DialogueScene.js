@@ -1,5 +1,8 @@
 // DialogueScene.js
 import * as Phaser from "https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.esm.js";
+import { traits, saveProgress } from "../state/traits.js";
+import { VirtueSystem } from "../state/VirtueSystem.js";
+import { DilemmaStyles } from "../utils/dilemmaStyles.js";
 
 export default class DialogueScene extends Phaser.Scene {
   constructor() {
@@ -17,56 +20,69 @@ export default class DialogueScene extends Phaser.Scene {
     const { width, height } = this.sys.game.config;
     console.log("DialogueScene dimensions:", width, height);
 
+    // Initialize virtue system
+    VirtueSystem.initScene(this);
+
+    // Bring this scene to the top to ensure visibility
+    this.scene.bringToTop();
+
     // Dark overlay
-    //this.add.rectangle(width / 2, height / 2, width, height, 0x000000, 0.6);
-    this.add.rectangle(200, 200, 100, 100, 0xff0000);
+    const overlay = this.add.rectangle(width / 2, height / 2, width, height, 0x000000, 0.6);
+    overlay.setDepth(5000);
 
     // Popup box
-    const boxWidth = 500,
-      boxHeight = 300;
+    const boxWidth = DilemmaStyles.modal.width;
+    const boxHeight = DilemmaStyles.modal.height;
     const boxX = width / 2 - boxWidth / 2;
     const boxY = height / 2 - boxHeight / 2;
 
     const bg = this.add.graphics();
-    bg.fillStyle(0x222244, 0.95);
-    bg.fillRoundedRect(boxX, boxY, boxWidth, boxHeight, 15);
-    bg.lineStyle(3, 0xffffff, 1);
-    bg.strokeRoundedRect(boxX, boxY, boxWidth, boxHeight, 15);
+    bg.setDepth(5001);
+    bg.fillStyle(DilemmaStyles.modal.backgroundColor, DilemmaStyles.modal.backgroundAlpha);
+    bg.fillRoundedRect(boxX, boxY, boxWidth, boxHeight, DilemmaStyles.modal.borderRadius);
+    bg.lineStyle(DilemmaStyles.modal.borderWidth, DilemmaStyles.modal.borderColor, 1);
+    bg.strokeRoundedRect(boxX, boxY, boxWidth, boxHeight, DilemmaStyles.modal.borderRadius);
 
     // Title
     this.add
-      .text(width / 2, boxY + 25, "Dialogue", {
-        fontSize: "22px",
-        color: "#ffcc00",
-        fontStyle: "bold",
-      })
-      .setOrigin(0.5);
+      .text(width / 2, boxY + 35, "Dialogue", DilemmaStyles.title)
+      .setOrigin(0.5)
+      .setDepth(5002);
 
     // Message
-    this.add.text(boxX + 20, boxY + 60, this.message, {
-      fontSize: "16px",
-      color: "#ffffff",
-      wordWrap: { width: boxWidth - 40 },
-    });
+    this.add.text(boxX + 20, boxY + 80, this.message, DilemmaStyles.question)
+    .setDepth(5002);
 
     // Options
-    let y = boxY + 140;
+    let y = boxY + 180;
+    const optionGap = 50;
     this.options.forEach((opt, i) => {
       const optionText = this.add
-        .text(boxX + 40, y, `${i + 1}. ${opt.text}`, {
-          fontSize: "16px",
-          color: "#00e6e6",
-          backgroundColor: "#333355",
-          padding: { left: 10, right: 10, top: 5, bottom: 5 },
-        })
+        .text(boxX + 40, y, `${i + 1}. ${opt.text}`, DilemmaStyles.option)
+        .setDepth(5003)
         .setInteractive({ useHandCursor: true })
         .on("pointerover", () => {
-          optionText.setStyle({ color: "#ffffff", backgroundColor: "#444477" });
+          optionText.setStyle(DilemmaStyles.optionHover);
         })
         .on("pointerout", () => {
-          optionText.setStyle({ color: "#00e6e6", backgroundColor: "#333355" });
+          optionText.setStyle(DilemmaStyles.optionNormal);
         })
-        .on("pointerdown", () => {
+        .on("pointerdown", async () => {
+          // Apply traits if present
+          if (opt.traits) {
+            for (let t in opt.traits) {
+              traits[t] = (traits[t] || 0) + opt.traits[t];
+            }
+            await saveProgress();
+          }
+
+          // Award virtue points (recalculated from traits)
+          VirtueSystem.awardPoints(
+            this,
+            0, // Not used anymore, calculated from traits
+            opt.reason || "Choice made"
+          );
+
           // Run callback if provided
           if (this.onChoice) this.onChoice(i);
 
@@ -78,7 +94,7 @@ export default class DialogueScene extends Phaser.Scene {
           this.scene.resume("ApartmentHallwayScene"); // ✅ resume hallway
         });
 
-      y += 50;
+      y += optionGap;
     });
   }
 }

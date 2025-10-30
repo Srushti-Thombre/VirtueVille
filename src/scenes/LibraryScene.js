@@ -143,24 +143,26 @@ export default class LibraryScene extends Phaser.Scene {
                   {
                     text: "Log out quietly",
                     points: 10,
-                    reason:
-                      "Being responsible and protecting someone's privacy",
+                    reason: "Being responsible and protecting someone's privacy",
+                    traits: { responsibility: 2, empathy: 1 },
                   },
                   {
                     text: "Ignore and walk away",
                     points: -5,
                     reason: "Ignoring potential security risks",
+                    traits: { responsibility: -2, selfishness: 1 },
                   },
                   {
                     text: "Misuse their account",
                     points: -15,
                     reason: "Deliberately violating someone's privacy",
+                    traits: { dishonesty: 3, selfishness: 2, responsibility: -3 },
                   },
                   {
                     text: "Inform the librarian",
                     points: 15,
-                    reason:
-                      "Taking responsible action to protect someone's account",
+                    reason: "Taking responsible action to protect someone's account",
+                    traits: { responsibility: 3, courage: 1, empathy: 1 },
                   },
                 ],
               });

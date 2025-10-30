@@ -139,21 +139,26 @@ export default class GameScene extends Phaser.Scene {
                   {
                     text: "Pick up the wallet and return it to the person immediately",
                     points: 15,
-                    reason:
-                      "Showing honesty and kindness by returning the wallet",
+                    reason: "Showing honesty and kindness by returning the wallet",
+                    traits: { responsibility: 3, empathy: 2, courage: 1 },
                   },
                   {
                     text: "Pick it up but keep the money, then return only the empty wallet",
                     points: -10,
                     reason: "Being dishonest and stealing money",
+                    traits: { dishonesty: 3, selfishness: 2, responsibility: -2 },
                   },
                   {
                     text: "Ignore the wallet and walk away",
-                    traits: { fear: 1, responsibility: -1 },
+                    points: -5,
+                    reason: "Avoiding responsibility",
+                    traits: { fear: 1, responsibility: -1, selfishness: 1 },
                   },
                   {
                     text: "Give it to a nearby guard or authority figure",
-                    traits: { responsibility: 3, courage: 1 },
+                    points: 15,
+                    reason: "Taking responsible action",
+                    traits: { responsibility: 3, courage: 1, empathy: 1 },
                   },
                 ],
               });

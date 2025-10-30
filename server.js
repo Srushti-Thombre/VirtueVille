@@ -81,6 +81,30 @@ const db = new sqlite3.Database("users.db", (err) => {
         }
       }
     );
+    
+    // Create traits table
+    db.run(
+      `CREATE TABLE IF NOT EXISTS user_traits (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        empathy INTEGER DEFAULT 0,
+        responsibility INTEGER DEFAULT 0,
+        courage INTEGER DEFAULT 0,
+        fear INTEGER DEFAULT 0,
+        selfishness INTEGER DEFAULT 0,
+        dishonesty INTEGER DEFAULT 0,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id),
+        UNIQUE(user_id)
+      )`,
+      (err) => {
+        if (err) {
+          console.error("❌ Traits table creation failed:", err.message);
+        } else {
+          console.log("✅ Traits table ready.");
+        }
+      }
+    );
   }
 });
 
@@ -309,6 +333,124 @@ app.post("/api/logout", (req, res) => {
   });
 });
 
+// API endpoint to save user traits
+app.post("/api/traits/save", (req, res) => {
+  try {
+    if (!req.session.user) {
+      return res.status(401).json({ error: "Not logged in" });
+    }
+
+    const { traits } = req.body;
+    const userId = req.session.user.id;
+
+    if (!traits) {
+      return res.status(400).json({ error: "Traits data required" });
+    }
+
+    const sql = `
+      INSERT INTO user_traits (user_id, empathy, responsibility, courage, fear, selfishness, dishonesty, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+      ON CONFLICT(user_id) DO UPDATE SET
+        empathy = excluded.empathy,
+        responsibility = excluded.responsibility,
+        courage = excluded.courage,
+        fear = excluded.fear,
+        selfishness = excluded.selfishness,
+        dishonesty = excluded.dishonesty,
+        updated_at = CURRENT_TIMESTAMP
+    `;
+
+    db.run(
+      sql,
+      [
+        userId,
+        traits.empathy || 0,
+        traits.responsibility || 0,
+        traits.courage || 0,
+        traits.fear || 0,
+        traits.selfishness || 0,
+        traits.dishonesty || 0,
+      ],
+      (err) => {
+        if (err) {
+          console.error("❌ Error saving traits:", err.message);
+          return res.status(500).json({ error: "Failed to save traits" });
+        }
+        console.log("✅ Traits saved for user:", req.session.user.username);
+        res.json({ success: true });
+      }
+    );
+  } catch (error) {
+    console.error("❌ Error in /api/traits/save:", error.message);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// API endpoint to get user traits
+app.get("/api/traits/get", (req, res) => {
+  try {
+    if (!req.session.user) {
+      return res.status(401).json({ error: "Not logged in" });
+    }
+
+    const userId = req.session.user.id;
+    const sql = "SELECT * FROM user_traits WHERE user_id = ?";
+
+    db.get(sql, [userId], (err, row) => {
+      if (err) {
+        console.error("❌ Error retrieving traits:", err.message);
+        return res.status(500).json({ error: "Failed to retrieve traits" });
+      }
+      if (row) {
+        res.json({ traits: row });
+      } else {
+        // Return default traits if none exist
+        res.json({
+          traits: {
+            empathy: 0,
+            responsibility: 0,
+            courage: 0,
+            fear: 0,
+            selfishness: 0,
+            dishonesty: 0,
+          },
+        });
+      }
+    });
+  } catch (error) {
+    console.error("❌ Error in /api/traits/get:", error.message);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// API endpoint to get all users' traits (for dashboard)
+app.get("/api/traits/all", (req, res) => {
+  try {
+    if (!req.session.user) {
+      return res.status(401).json({ error: "Not logged in" });
+    }
+
+    const sql = `
+      SELECT u.username, t.empathy, t.responsibility, t.courage, 
+             t.fear, t.selfishness, t.dishonesty, t.updated_at
+      FROM user_traits t
+      JOIN users u ON t.user_id = u.id
+      ORDER BY t.updated_at DESC
+    `;
+
+    db.all(sql, [], (err, rows) => {
+      if (err) {
+        console.error("❌ Error retrieving all traits:", err.message);
+        return res.status(500).json({ error: "Failed to retrieve traits" });
+      }
+      res.json({ users: rows || [] });
+    });
+  } catch (error) {
+    console.error("❌ Error in /api/traits/all:", error.message);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
 // Serve phaser game page (protected route) with error handling
 app.get("/phaser.html", (req, res, next) => {
   try {
@@ -319,6 +461,20 @@ app.get("/phaser.html", (req, res, next) => {
     res.sendFile(path.join(__dirname, "public/phaser.html")); // serve the game
   } catch (error) {
     console.error("❌ Error serving phaser.html:", error.message);
+    next(error);
+  }
+});
+
+// Serve dashboard page (protected route) with error handling
+app.get("/dashboard.html", (req, res, next) => {
+  try {
+    if (!req.session.user) {
+      console.warn("⚠️ Unauthorized access attempt to dashboard.html");
+      return res.redirect("/auth.html");
+    }
+    res.sendFile(path.join(__dirname, "view/dashboard.html"));
+  } catch (error) {
+    console.error("❌ Error serving dashboard.html:", error.message);
     next(error);
   }
 });

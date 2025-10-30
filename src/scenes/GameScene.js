@@ -1,7 +1,8 @@
 import * as Phaser from "https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.esm.js";
 import { VirtueSystem } from "../state/VirtueSystem.js";
 import { minimapNodes } from "../ui/minimapConfig.js"; // This import is required!
-import { isTaskCompleted, markTaskCompleted } from "../state/traits.js";
+import { isTaskCompleted, markTaskCompleted, traits, saveProgress } from "../state/traits.js";
+import { DilemmaStyles } from "../utils/dilemmaStyles.js";
 
 export default class GameScene extends Phaser.Scene {
   constructor() {
@@ -405,18 +406,20 @@ export default class GameScene extends Phaser.Scene {
     // Enable input globally
     this.input.enabled = true;
 
-    // Create background graphics
-    const bg = this.add
-      .rectangle(dialogX, dialogY, boxWidth, boxHeight, 0x000000, 0.8)
-      .setStrokeStyle(2, 0xffffff)
-      .setScrollFactor(0)
-      .setDepth(1000); // ensure on top
+    // Create background using DilemmaStyles
+    const bg = this.add.graphics();
+    bg.setScrollFactor(0).setDepth(1000);
+    bg.fillStyle(DilemmaStyles.modal.backgroundColor, DilemmaStyles.modal.backgroundAlpha);
+    bg.fillRoundedRect(dialogX - boxWidth / 2, dialogY - boxHeight / 2, boxWidth, boxHeight, DilemmaStyles.modal.borderRadius);
+    bg.lineStyle(DilemmaStyles.modal.borderWidth, DilemmaStyles.modal.borderColor, 1);
+    bg.strokeRoundedRect(dialogX - boxWidth / 2, dialogY - boxHeight / 2, boxWidth, boxHeight, DilemmaStyles.modal.borderRadius);
 
     const mainText = this.add
-      .text(dialogX, dialogY - 60, "What should I do?", {
-        font: "16px monospace",
-        fill: "#ffffff",
-        wordWrap: { width: boxWidth - 40 },
+      .text(dialogX, dialogY - 70, "What should I do?", {
+        fontFamily: DilemmaStyles.title.fontFamily,
+        fontSize: DilemmaStyles.title.fontSize,
+        fontStyle: DilemmaStyles.title.fontStyle,
+        color: DilemmaStyles.title.color,
         align: "center",
       })
       .setOrigin(0.5)
@@ -436,9 +439,12 @@ export default class GameScene extends Phaser.Scene {
 
     options.forEach((opt, i) => {
       const optionText = this.add
-        .text(dialogX, dialogY - 20 + i * 25, opt.text, {
-          font: "14px monospace",
-          fill: "#00ff00",
+        .text(dialogX, dialogY - 20 + i * 30, `${i + 1}. ${opt.text}`, {
+          fontFamily: DilemmaStyles.option.fontFamily,
+          fontSize: DilemmaStyles.option.fontSize,
+          color: DilemmaStyles.option.color,
+          backgroundColor: DilemmaStyles.option.backgroundColor,
+          padding: DilemmaStyles.option.padding,
         })
         .setOrigin(0.5)
         .setScrollFactor(0)
@@ -450,15 +456,52 @@ export default class GameScene extends Phaser.Scene {
 
       // hover effects
       optionText.on("pointerover", () =>
-        optionText.setStyle({ fill: "#ffff00" })
+        optionText.setStyle(DilemmaStyles.optionHover)
       );
       optionText.on("pointerout", () =>
-        optionText.setStyle({ fill: "#00ff00" })
+        optionText.setStyle(DilemmaStyles.optionNormal)
       );
 
       // click event
       optionText.on("pointerdown", () => {
         console.log(`Option selected: ${opt.text}`);
+        
+        // Process the choice and award traits
+        let reason = "";
+        let selectedTraits = {};
+        
+        switch (opt.id) {
+          case "help": // Call for help
+            reason = "Called for help - showing responsibility and care";
+            selectedTraits = { responsibility: 3, empathy: 2, courage: 1 };
+            break;
+          case "check": // Check on the girl
+            reason = "Checked on the girl - showing empathy";
+            selectedTraits = { empathy: 3, courage: 1 };
+            break;
+          case "confront": // Confront the man
+            reason = "Confronted the situation - showing courage";
+            selectedTraits = { courage: 3, responsibility: 1 };
+            break;
+          case "nothing": // Do nothing
+            reason = "Chose to ignore - showing indifference";
+            selectedTraits = { selfishness: 2, empathy: -2, fear: 1 };
+            break;
+        }
+        
+        // Apply traits
+        for (let t in selectedTraits) {
+          traits[t] = (traits[t] || 0) + selectedTraits[t];
+        }
+        saveProgress();
+        
+        // Award virtue points (recalculated from traits)
+        VirtueSystem.awardPoints(this, 0, reason);
+        console.log(`✅ Parking Lot: Applied traits:`, selectedTraits);
+        
+        // Mark task as completed
+        markTaskCompleted("parkingLotTask");
+        
         console.log("Player position before:", this.player.x, this.player.y);
         console.log(
           "Camera scroll before:",
