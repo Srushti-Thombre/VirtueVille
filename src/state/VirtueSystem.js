@@ -1,13 +1,12 @@
 // VirtueSystem.js
+import { traits } from "./traits.js";
+
 export class VirtueSystem {
     static initScene(scene) {
-        // Initialize score if it doesn't exist
-        if (scene.registry.get('score') === undefined) {
-            scene.registry.set('score', 0);
-            console.log('✅ Virtue points system initialized with score: 0');
-        } else {
-            console.log('✅ Virtue points system loaded with score:', scene.registry.get('score'));
-        }
+        // Calculate initial score from traits
+        const totalScore = this.calculateVirtuePoints();
+        scene.registry.set('score', totalScore);
+        console.log('✅ Virtue points system initialized with score:', totalScore);
 
         // Make sure UIScene1 is running
         const uiScene = scene.scene.manager.getScene('UIScene1');
@@ -31,22 +30,39 @@ export class VirtueSystem {
         }
     }
 
+    // Calculate virtue points as sum of positive traits minus negative traits
+    static calculateVirtuePoints() {
+        // Positive traits
+        const positiveTraits = (traits.empathy || 0) + 
+                              (traits.responsibility || 0) + 
+                              (traits.courage || 0);
+        
+        // Negative traits (subtract these)
+        const negativeTraits = (traits.fear || 0) + 
+                              (traits.selfishness || 0) + 
+                              (traits.dishonesty || 0);
+        
+        return positiveTraits - negativeTraits;
+    }
+
     static awardPoints(scene, points, reason) {
-        // Get current score
-        const currentScore = scene.registry.get('score') || 0;
+        // Recalculate score from traits instead of adding points
+        const newScore = this.calculateVirtuePoints();
+        const oldScore = scene.registry.get('score') || 0;
+        const scoreDiff = newScore - oldScore;
         
         // Update score
-        scene.registry.set('score', currentScore + points);
+        scene.registry.set('score', newScore);
         
         // Show floating text feedback
-        if (points !== 0) {
-            const sign = points > 0 ? '+' : '';
-            const color = points > 0 ? '#00ff00' : '#ff0000';
+        if (scoreDiff !== 0) {
+            const sign = scoreDiff > 0 ? '+' : '';
+            const color = scoreDiff > 0 ? '#00ff00' : '#ff0000';
             
             const floatingText = scene.add.text(
                 scene.cameras.main.centerX,
                 scene.cameras.main.centerY - 50,
-                `${sign}${points} Virtue Points\n${reason}`,
+                `${sign}${scoreDiff} Virtue Points\n${reason}`,
                 {
                     fontSize: '20px',
                     fill: color,

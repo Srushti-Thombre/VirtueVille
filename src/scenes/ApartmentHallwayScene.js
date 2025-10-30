@@ -1,5 +1,5 @@
 import * as Phaser from "https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.esm.js";
-import { isTaskCompleted, markTaskCompleted } from "../state/traits.js";
+import { isTaskCompleted, markTaskCompleted, saveProgress } from "../state/traits.js";
 
 class ApartmentHallwayScene extends Phaser.Scene {
   constructor() {
@@ -10,21 +10,34 @@ class ApartmentHallwayScene extends Phaser.Scene {
     // --- Load tilemap and assets ---
     this.load.tilemapTiledJSON("hallwayMap", "maps/hallway1.tmj");
     this.load.image("hallwayTiles", "tilesets/CityMap.png");
+
+    // Load all character spritesheets
     this.load.spritesheet(
-      "player",
+      "maleAdventurer",
       "kenney_toon-characters-1/Male adventurer/Tilesheet/character_maleAdventurer_sheet.png",
-      {
-        frameWidth: 96,
-        frameHeight: 128,
-      }
+      { frameWidth: 96, frameHeight: 128 }
     );
+    this.load.spritesheet(
+      "femaleAdventurer",
+      "kenney_toon-characters-1/Female adventurer/Tilesheet/character_femaleAdventurer_sheet.png",
+      { frameWidth: 96, frameHeight: 128 }
+    );
+    this.load.spritesheet(
+      "malePerson",
+      "kenney_toon-characters-1/Male person/Tilesheet/character_malePerson_sheet.png",
+      { frameWidth: 96, frameHeight: 128 }
+    );
+    this.load.spritesheet(
+      "femalePerson",
+      "kenney_toon-characters-1/Female person/Tilesheet/character_femalePerson_sheet.png",
+      { frameWidth: 96, frameHeight: 128 }
+    );
+
+    // Load neighbor sprite
     this.load.spritesheet(
       "neighbor",
       "kenney_toon-characters-1/Male person/Tilesheet/character_malePerson_sheet.png",
-      {
-        frameWidth: 96,
-        frameHeight: 128,
-      }
+      { frameWidth: 96, frameHeight: 128 }
     );
   }
 
@@ -50,7 +63,15 @@ class ApartmentHallwayScene extends Phaser.Scene {
     walls.setCollisionByProperty({ collides: true });
 
     // --- Player & NPC setup ---
-    this.player = this.physics.add.sprite(256, 240, "player").setScale(0.3);
+    // Get selected character
+    const playerCharacter =
+      this.registry.get("playerCharacter") ||
+      localStorage.getItem("selectedCharacter") ||
+      "maleAdventurer";
+
+    this.player = this.physics.add
+      .sprite(256, 240, playerCharacter)
+      .setScale(0.3);
     this.neighbor = this.physics.add.sprite(320, 112, "neighbor").setScale(0.3);
     this.neighbor.body.setImmovable(true);
 
@@ -62,6 +83,11 @@ class ApartmentHallwayScene extends Phaser.Scene {
     this.cameras.main.startFollow(this.player, true, 0.12, 0.12);
     this.cameras.main.setZoom(2);
     this.cameras.main.setRoundPixels(false);
+
+    // Ensure UIScene1 is running for HUD buttons
+    if (!this.scene.isActive("UIScene1")) {
+      this.scene.launch("UIScene1");
+    }
 
     // --- Dialogue setup ---
     this.neighbor.dialogueState = "IDLE";
@@ -117,6 +143,15 @@ class ApartmentHallwayScene extends Phaser.Scene {
       if (!exitZone.triggered) {
         exitZone.triggered = true;
         console.log("Player hit exit zone!");
+         
+
+  markTaskCompleted("ApartmentHallwayScene");
+saveProgress();
+    // ✅ 2. Update minimap dot color
+    const gameScene = this.scene.get("GameScene");
+    if (gameScene?.updateMinimapDotColor) {
+      gameScene.updateMinimapDotColor("ApartmentHallwayScene");
+    }
         this.scene.start("GameScene");
       }
     });
@@ -132,31 +167,42 @@ class ApartmentHallwayScene extends Phaser.Scene {
 
   // --- Animation setup ---
   createAnimations() {
-    if (!this.anims.exists("left")) {
-      this.anims.create({
-        key: "left",
-        frames: this.anims.generateFrameNumbers("player", { start: 4, end: 5 }),
-        frameRate: 10,
-        repeat: -1,
-      });
-    }
+    // Get the selected character
+    const playerCharacter =
+      this.registry.get("playerCharacter") ||
+      localStorage.getItem("selectedCharacter") ||
+      "maleAdventurer";
 
-    if (!this.anims.exists("turn")) {
-      this.anims.create({
-        key: "turn",
-        frames: [{ key: "player", frame: 0 }],
-        frameRate: 20,
-      });
-    }
+    // Destroy existing animations if they exist
+    if (this.anims.exists("left")) this.anims.remove("left");
+    if (this.anims.exists("turn")) this.anims.remove("turn");
+    if (this.anims.exists("right")) this.anims.remove("right");
 
-    if (!this.anims.exists("right")) {
-      this.anims.create({
-        key: "right",
-        frames: this.anims.generateFrameNumbers("player", { start: 2, end: 3 }),
-        frameRate: 10,
-        repeat: -1,
-      });
-    }
+    this.anims.create({
+      key: "left",
+      frames: this.anims.generateFrameNumbers(playerCharacter, {
+        start: 4,
+        end: 5,
+      }),
+      frameRate: 10,
+      repeat: -1,
+    });
+
+    this.anims.create({
+      key: "turn",
+      frames: [{ key: playerCharacter, frame: 0 }],
+      frameRate: 20,
+    });
+
+    this.anims.create({
+      key: "right",
+      frames: this.anims.generateFrameNumbers(playerCharacter, {
+        start: 2,
+        end: 3,
+      }),
+      frameRate: 10,
+      repeat: -1,
+    });
   }
 
   update() {
@@ -256,10 +302,28 @@ class ApartmentHallwayScene extends Phaser.Scene {
         options: [
           {
             text: "Look under the nearby potted plant and continue helping him.",
+            points: 10,
+            reason: "Helping find the key",
+            traits: { empathy: 2, responsibility: 2 },
           },
-          { text: "Yes, you can come inside." },
-          { text: "No, I don’t trust you." },
-          { text: "Sorry, I can't help right now." },
+          {
+            text: "Yes, you can come inside.",
+            points: 15,
+            reason: "Showing trust and hospitality",
+            traits: { empathy: 3, courage: 1 },
+          },
+          {
+            text: "No, I don't trust you.",
+            points: -5,
+            reason: "Being unwelcoming",
+            traits: { fear: 2, selfishness: 1 },
+          },
+          {
+            text: "Sorry, I can't help right now.",
+            points: 0,
+            reason: "Being neutral",
+            traits: { responsibility: -1 },
+          },
         ],
         onChoice: (choiceIndex) => {
           console.log("Player chose option", choiceIndex);
@@ -290,6 +354,11 @@ class ApartmentHallwayScene extends Phaser.Scene {
           this.scene.resume();
           this.neighbor.dialogueState = "IDLE";
         },
+      });
+      
+      // Bring DialogueScene to top after a small delay to ensure it's created
+      this.time.delayedCall(100, () => {
+        this.scene.bringToTop("DialogueScene");
       });
 
       this.scene.pause();

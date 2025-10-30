@@ -1,7 +1,8 @@
 // ✅ Full CafeScene.js (only showQuiz fixed, nothing else changed)
 import * as Phaser from "https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.esm.js";
-import { isTaskCompleted, markTaskCompleted } from "../state/traits.js";
+import { isTaskCompleted, markTaskCompleted, traits, saveProgress } from "../state/traits.js";
 import { VirtueSystem } from "../state/VirtueSystem.js";
+import { DilemmaStyles } from "../utils/dilemmaStyles.js";
 
 export default class CafeScene extends Phaser.Scene {
   constructor() {
@@ -32,21 +33,26 @@ export default class CafeScene extends Phaser.Scene {
       "public/tilesets/adventurer_tilesheet.png"
     );
 
+    // Load all character spritesheets
     this.load.spritesheet(
-      "player",
+      "maleAdventurer",
       "public/kenney_toon-characters-1/Male adventurer/Tilesheet/character_maleAdventurer_sheet.png",
       { frameWidth: 96, frameHeight: 128 }
     );
-
-    this.load.atlasXML(
+    this.load.spritesheet(
       "femaleAdventurer",
-      "public/kenney_toon-characters-1/Female adventurer/Tilesheet/character_femaleAdventurer_sheetHD.png",
-      "kenney_toon-characters-1/Female adventurer/Tilesheet/character_femaleAdventurer_sheetHD.xml"
+      "public/kenney_toon-characters-1/Female adventurer/Tilesheet/character_femaleAdventurer_sheet.png",
+      { frameWidth: 96, frameHeight: 128 }
     );
-    this.load.atlasXML(
+    this.load.spritesheet(
       "malePerson",
-      "kenney_toon-characters-1/Male person/Tilesheet/character_malePerson_sheetHD.png",
-      "kenney_toon-characters-1/Male person/Tilesheet/character_malePerson_sheetHD.xml"
+      "kenney_toon-characters-1/Male person/Tilesheet/character_malePerson_sheet.png",
+      { frameWidth: 96, frameHeight: 128 }
+    );
+    this.load.spritesheet(
+      "femalePerson",
+      "kenney_toon-characters-1/Female person/Tilesheet/character_femalePerson_sheet.png",
+      { frameWidth: 96, frameHeight: 128 }
     );
   }
 
@@ -72,8 +78,15 @@ export default class CafeScene extends Phaser.Scene {
     const spawnObj = playerSpawnLayer.objects.find(
       (o) => o.name === "playerSpawn"
     );
+
+    // Get selected character
+    const playerCharacter =
+      this.registry.get("playerCharacter") ||
+      localStorage.getItem("selectedCharacter") ||
+      "maleAdventurer";
+
     this.player = this.physics.add
-      .sprite(spawnObj.x, spawnObj.y, "player", 0)
+      .sprite(spawnObj.x, spawnObj.y, playerCharacter, 0)
       .setCollideWorldBounds(true);
     this.player.setDisplaySize(60, 90);
 
@@ -97,6 +110,11 @@ export default class CafeScene extends Phaser.Scene {
     this.cameras.main.setRoundPixels(false);
     this.cameras.main.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
     this.physics.world.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
+
+    // Ensure UIScene1 is running for HUD buttons
+    if (!this.scene.isActive("UIScene1")) {
+      this.scene.launch("UIScene1");
+    }
 
     this.cursors = this.input.keyboard.createCursorKeys();
     this.interactKey = this.input.keyboard.addKey(
@@ -152,9 +170,15 @@ export default class CafeScene extends Phaser.Scene {
       this.exitZone = this.physics.add
         .staticImage(exitObj.x, exitObj.y, null)
         .setVisible(false);
-      this.physics.add.overlap(this.player, this.exitZone, () =>
+      this.physics.add.overlap(this.player, this.exitZone, () =>{
+        markTaskCompleted("CafeScene");
+    saveProgress();
+    const gameScene = this.scene.get("GameScene");
+    if (gameScene?.updateMinimapDotColor) {
+      gameScene.updateMinimapDotColor("CafeScene");
+    }
         this.scene.start("GameScene")
-      );
+     });
     }
 
     const triggerLayer = map.getObjectLayer("trigger");
@@ -196,27 +220,51 @@ export default class CafeScene extends Phaser.Scene {
   }
 
   createPlayerAnimations() {
+    // Get the selected character
+    const playerCharacter =
+      this.registry.get("playerCharacter") ||
+      localStorage.getItem("selectedCharacter") ||
+      "maleAdventurer";
+
+    // Destroy existing animations if they exist
+    if (this.anims.exists("left")) this.anims.remove("left");
+    if (this.anims.exists("right")) this.anims.remove("right");
+    if (this.anims.exists("up")) this.anims.remove("up");
+    if (this.anims.exists("down")) this.anims.remove("down");
+
     this.anims.create({
       key: "left",
-      frames: this.anims.generateFrameNumbers("player", { start: 16, end: 18 }),
+      frames: this.anims.generateFrameNumbers(playerCharacter, {
+        start: 16,
+        end: 18,
+      }),
       frameRate: 10,
       repeat: -1,
     });
     this.anims.create({
       key: "right",
-      frames: this.anims.generateFrameNumbers("player", { start: 19, end: 21 }),
+      frames: this.anims.generateFrameNumbers(playerCharacter, {
+        start: 19,
+        end: 21,
+      }),
       frameRate: 10,
       repeat: -1,
     });
     this.anims.create({
       key: "up",
-      frames: this.anims.generateFrameNumbers("player", { start: 22, end: 23 }),
+      frames: this.anims.generateFrameNumbers(playerCharacter, {
+        start: 22,
+        end: 23,
+      }),
       frameRate: 10,
       repeat: -1,
     });
     this.anims.create({
       key: "down",
-      frames: this.anims.generateFrameNumbers("player", { start: 22, end: 23 }),
+      frames: this.anims.generateFrameNumbers(playerCharacter, {
+        start: 22,
+        end: 23,
+      }),
       frameRate: 10,
       repeat: -1,
     });
@@ -313,39 +361,50 @@ export default class CafeScene extends Phaser.Scene {
     this.quizActive = true;
 
     const cam = this.cameras.main;
-    const boxWidth = 420,
-      boxHeight = 340;
-    const centerX = cam.width / 2,
-      centerY = cam.height / 2;
-    const boxX = centerX - boxWidth / 2,
-      boxY = centerY - boxHeight / 2 + 20;
+    const boxWidth = 500;
+    const boxHeight = 420;
+    const centerX = cam.width / 2;
+    const centerY = cam.height / 2;
+    const boxX = centerX - boxWidth / 2;
+    const boxY = centerY - boxHeight / 2;
 
     this.quizBox.clear();
-    this.quizBox.fillStyle(0xffffff, 1);
-    this.quizBox.fillRoundedRect(boxX, boxY, boxWidth, boxHeight, 14);
-    this.quizBox.lineStyle(2, 0x000000, 1);
-    this.quizBox.strokeRoundedRect(boxX, boxY, boxWidth, boxHeight, 14);
+    this.quizBox.fillStyle(DilemmaStyles.modal.backgroundColor, DilemmaStyles.modal.backgroundAlpha);
+    this.quizBox.fillRoundedRect(boxX, boxY, boxWidth, boxHeight, DilemmaStyles.modal.borderRadius);
+    this.quizBox.lineStyle(DilemmaStyles.modal.borderWidth, DilemmaStyles.modal.borderColor, 1);
+    this.quizBox.strokeRoundedRect(boxX, boxY, boxWidth, boxHeight, DilemmaStyles.modal.borderRadius);
 
     this.quizText.setText("A man forgot his wallet. What do you do?");
-    this.quizText.setVisible(true).setPosition(boxX + 30, boxY + 30);
+    this.quizText.setStyle({
+      fontFamily: DilemmaStyles.question.fontFamily,
+      fontSize: "16px",
+      color: DilemmaStyles.question.color,
+      wordWrap: { width: boxWidth - 40 },
+    });
+    this.quizText.setVisible(true).setPosition(boxX + 20, boxY + 50);
 
     if (this.optionTexts) this.optionTexts.forEach((o) => o.destroy());
     this.optionTexts = [];
 
-    let optionY = boxY + 100;
-    const optionGap = 50;
+    let optionY = boxY + 120;
+    const optionGap = 65;
     this.quizOptions.forEach((option, i) => {
       const opt = this.add
-        .text(boxX + 36, optionY, option, {
-          fontSize: "16px",
-          fill: "#000",
-          wordWrap: { width: boxWidth - 80, useAdvancedWrap: true },
+        .text(boxX + 30, optionY, `${i + 1}. ${option}`, {
+          fontFamily: DilemmaStyles.option.fontFamily,
+          fontSize: "14px",
+          color: DilemmaStyles.option.color,
+          backgroundColor: DilemmaStyles.option.backgroundColor,
+          padding: { left: 10, right: 10, top: 6, bottom: 6 },
+          wordWrap: { width: boxWidth - 70 },
           lineSpacing: 4,
         })
         .setInteractive({ useHandCursor: true })
         .setDepth(1001)
         .setScrollFactor(0);
 
+      opt.on("pointerover", () => opt.setStyle(DilemmaStyles.optionHover));
+      opt.on("pointerout", () => opt.setStyle(DilemmaStyles.optionNormal));
       opt.on("pointerdown", () =>
         this.handleQuizSelection({ key: String.fromCharCode(65 + i) })
       );
@@ -356,7 +415,6 @@ export default class CafeScene extends Phaser.Scene {
     this.children.bringToTop(this.quizBox);
     this.children.bringToTop(this.quizText);
     this.optionTexts.forEach((o) => this.children.bringToTop(o));
-    this.input.keyboard.once("keydown", this.handleQuizSelection, this);
   }
 
   handleQuizSelection(event) {
@@ -366,55 +424,63 @@ export default class CafeScene extends Phaser.Scene {
     this.selectedOption = key;
     this.quizActive = false;
 
-    // Calculate virtue points based on choice
-    let points = 0;
+    // Determine traits and reason based on choice
     let reason = "";
+    let selectedTraits = {};
+    
     switch (index) {
       case 0: // A: Pay for the man's drink quietly
-        points = 15;
         reason = "Showed empathy and kindness by helping discreetly";
+        selectedTraits = { empathy: 3, responsibility: 2, courage: 1 };
         break;
       case 1: // B: Tell barista to make exception
-        points = 5;
         reason = "Tried to help but was somewhat pushy";
+        selectedTraits = { empathy: 1, courage: 1, responsibility: 1 };
         break;
       case 2: // C: Give reassuring smile
-        points = 10;
         reason = "Showed empathy without interfering";
+        selectedTraits = { empathy: 2, courage: 1 };
         break;
       case 3: // D: Ignore the argument
-        points = -5;
         reason = "Ignored someone in need";
+        selectedTraits = { selfishness: 2, empathy: -2 };
         break;
     }
 
-    // Award virtue points
-    VirtueSystem.awardPoints(this, points, reason);
-    console.log(`✅ Cafe: Awarded ${points} points - ${reason}`);
+    // Apply traits
+    for (let t in selectedTraits) {
+      traits[t] = (traits[t] || 0) + selectedTraits[t];
+    }
+    saveProgress();
+
+    // Award virtue points (recalculated from traits)
+    VirtueSystem.awardPoints(this, 0, reason);
+    console.log(`✅ Cafe: Applied traits:`, selectedTraits);
 
     if (this.optionTexts) this.optionTexts.forEach((o) => o.destroy());
     this.optionTexts = [];
 
     const cam = this.cameras.main;
-    const boxWidth = 380,
-      boxHeight = 84;
-    const boxX = cam.width / 2 - boxWidth / 2,
-      boxY = cam.height / 2 - boxHeight / 2;
+    const boxWidth = 500;
+    const boxHeight = 150;
+    const boxX = cam.width / 2 - boxWidth / 2;
+    const boxY = cam.height / 2 - boxHeight / 2;
 
     this.quizBox.clear();
-    this.quizBox.fillStyle(0xffffff, 1);
-    this.quizBox.fillRoundedRect(boxX, boxY, boxWidth, boxHeight, 12);
-    this.quizBox.lineStyle(2, 0x000000, 1);
-    this.quizBox.strokeRoundedRect(boxX, boxY, boxWidth, boxHeight, 12);
+    this.quizBox.fillStyle(DilemmaStyles.modal.backgroundColor, DilemmaStyles.modal.backgroundAlpha);
+    this.quizBox.fillRoundedRect(boxX, boxY, boxWidth, boxHeight, DilemmaStyles.modal.borderRadius);
+    this.quizBox.lineStyle(DilemmaStyles.modal.borderWidth, DilemmaStyles.modal.borderColor, 1);
+    this.quizBox.strokeRoundedRect(boxX, boxY, boxWidth, boxHeight, DilemmaStyles.modal.borderRadius);
 
     this.quizText
       .setText(`You chose: ${this.quizOptions[index]}`)
       .setStyle({
-        fontSize: "16px",
-        fill: "#000",
+        fontFamily: DilemmaStyles.question.fontFamily,
+        fontSize: DilemmaStyles.question.fontSize,
+        color: DilemmaStyles.question.color,
         wordWrap: { width: boxWidth - 40 },
       })
-      .setPosition(boxX + 16, boxY + 14)
+      .setPosition(boxX + 20, boxY + 50)
       .setVisible(true);
 
     this.time.delayedCall(1400, this.moveMan, [], this);
@@ -446,17 +512,17 @@ export default class CafeScene extends Phaser.Scene {
 
   showThankYouMessage() {
     const cam = this.cameras.main;
-    const boxWidth = 380;
-    const boxHeight = 100;
+    const boxWidth = 500;
+    const boxHeight = 200;
     const boxX = cam.width / 2 - boxWidth / 2;
     const boxY = cam.height / 2 - boxHeight / 2;
 
     // Create thank you message box
     const thankYouBox = this.add.graphics();
-    thankYouBox.fillStyle(0xffffff, 1);
-    thankYouBox.fillRoundedRect(boxX, boxY, boxWidth, boxHeight, 12);
-    thankYouBox.lineStyle(2, 0x4a148c, 1);
-    thankYouBox.strokeRoundedRect(boxX, boxY, boxWidth, boxHeight, 12);
+    thankYouBox.fillStyle(DilemmaStyles.modal.backgroundColor, DilemmaStyles.modal.backgroundAlpha);
+    thankYouBox.fillRoundedRect(boxX, boxY, boxWidth, boxHeight, DilemmaStyles.modal.borderRadius);
+    thankYouBox.lineStyle(DilemmaStyles.modal.borderWidth, DilemmaStyles.modal.borderColor, 1);
+    thankYouBox.strokeRoundedRect(boxX, boxY, boxWidth, boxHeight, DilemmaStyles.modal.borderRadius);
     thankYouBox.setScrollFactor(0);
     thankYouBox.setDepth(1000);
 
@@ -466,8 +532,9 @@ export default class CafeScene extends Phaser.Scene {
         cam.height / 2,
         'The barista smiles at you.\n"Thanks for helping that customer earlier!\nYou made my day easier."',
         {
-          fontSize: "16px",
-          fill: "#000",
+          fontFamily: DilemmaStyles.question.fontFamily,
+          fontSize: DilemmaStyles.question.fontSize,
+          color: DilemmaStyles.question.color,
           align: "center",
           wordWrap: { width: boxWidth - 40 },
         }

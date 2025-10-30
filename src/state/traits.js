@@ -189,7 +189,12 @@ export async function saveProgress() {
 
     const storageKey = getUserSpecificKey("progress");
     localStorage.setItem(storageKey, JSON.stringify(saveData));
-    console.log("✅ Progress saved successfully");
+    console.log("✅ Progress saved to localStorage");
+    
+    // Also save to database if user is logged in
+    if (currentUser && currentUser.id !== "anonymous") {
+      await saveTraitsToDatabase(clamped);
+    }
   } catch (error) {
     console.error("❌ Error saving progress:", error.message);
     // Check if localStorage is available
@@ -198,6 +203,31 @@ export async function saveProgress() {
     } else if (error.name === "QuotaExceededError") {
       console.error("❌ localStorage quota exceeded");
     }
+  }
+}
+
+// Save traits to database
+export async function saveTraitsToDatabase(traitsData) {
+  try {
+    const response = await fetch("/api/traits/save", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "same-origin",
+      body: JSON.stringify({ traits: traitsData }),
+    });
+
+    if (response.ok) {
+      console.log("✅ Traits saved to database");
+      return true;
+    } else {
+      console.error("❌ Failed to save traits to database:", response.statusText);
+      return false;
+    }
+  } catch (error) {
+    console.error("❌ Error saving traits to database:", error.message);
+    return false;
   }
 }
 

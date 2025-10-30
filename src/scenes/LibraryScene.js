@@ -12,9 +12,26 @@ export default class LibraryScene extends Phaser.Scene {
     this.load.image("LibraryMap", "tilesets/library.png");
     this.load.image("Sample1", "tilesets/libassetpack-tiled.png");
     this.load.image("dummy", "tilesets/free_overview.png");
+
+    // Load all character spritesheets
     this.load.spritesheet(
-      "player",
+      "maleAdventurer",
       "kenney_toon-characters-1/Male adventurer/Tilesheet/character_maleAdventurer_sheet.png",
+      { frameWidth: 96, frameHeight: 128 }
+    );
+    this.load.spritesheet(
+      "femaleAdventurer",
+      "kenney_toon-characters-1/Female adventurer/Tilesheet/character_femaleAdventurer_sheet.png",
+      { frameWidth: 96, frameHeight: 128 }
+    );
+    this.load.spritesheet(
+      "malePerson",
+      "kenney_toon-characters-1/Male person/Tilesheet/character_malePerson_sheet.png",
+      { frameWidth: 96, frameHeight: 128 }
+    );
+    this.load.spritesheet(
+      "femalePerson",
+      "kenney_toon-characters-1/Female person/Tilesheet/character_femalePerson_sheet.png",
       { frameWidth: 96, frameHeight: 128 }
     );
   }
@@ -41,7 +58,16 @@ export default class LibraryScene extends Phaser.Scene {
 
     //furnitures.setCollisionByExclusion([-1]);
     //props.setCollisionByExclusion([-1]);
-    this.player = this.physics.add.sprite(14, 510, "player", 0).setScale(0.5);
+
+    // Get selected character
+    const playerCharacter =
+      this.registry.get("playerCharacter") ||
+      localStorage.getItem("selectedCharacter") ||
+      "maleAdventurer";
+
+    this.player = this.physics.add
+      .sprite(14, 510, playerCharacter, 0)
+      .setScale(0.5);
     this.player.setCollideWorldBounds(true);
     this.player.body.setSize(this.player.width * 0.6, this.player.height * 0.8);
     this.player.body.setOffset(
@@ -55,10 +81,19 @@ export default class LibraryScene extends Phaser.Scene {
     // Spawn player inside library
     //this.player = this.physics.add.sprite(this.startX, this.startY, 'player');
 
+    // Create animations for the selected character
+    this.createAnimations();
+
     // Enhanced camera follow
     this.cameras.main.startFollow(this.player, true, 0.12, 0.12);
     this.cameras.main.setRoundPixels(false);
     this.player.setCollideWorldBounds(true);
+
+    // Ensure UIScene1 is running for HUD buttons
+    if (!this.scene.isActive("UIScene1")) {
+      this.scene.launch("UIScene1");
+    }
+
     // Provide minimap bounds so the MinimapScene can map world coordinates
     try {
       this.registry.set("minimapBounds", {
@@ -108,26 +143,33 @@ export default class LibraryScene extends Phaser.Scene {
                   {
                     text: "Log out quietly",
                     points: 10,
-                    reason:
-                      "Being responsible and protecting someone's privacy",
+                    reason: "Being responsible and protecting someone's privacy",
+                    traits: { responsibility: 2, empathy: 1 },
                   },
                   {
                     text: "Ignore and walk away",
                     points: -5,
                     reason: "Ignoring potential security risks",
+                    traits: { responsibility: -2, selfishness: 1 },
                   },
                   {
                     text: "Misuse their account",
                     points: -15,
                     reason: "Deliberately violating someone's privacy",
+                    traits: { dishonesty: 3, selfishness: 2, responsibility: -3 },
                   },
                   {
                     text: "Inform the librarian",
                     points: 15,
-                    reason:
-                      "Taking responsible action to protect someone's account",
+                    reason: "Taking responsible action to protect someone's account",
+                    traits: { responsibility: 3, courage: 1, empathy: 1 },
                   },
                 ],
+              });
+
+              // Bring SituationScene to top after a small delay to ensure it's created
+              this.time.delayedCall(100, () => {
+                this.scene.bringToTop("SituationScene");
               });
             }
           },
@@ -167,7 +209,14 @@ export default class LibraryScene extends Phaser.Scene {
             if (!zone.triggered) {
               zone.triggered = true; // ✅ prevent retriggering
               console.log("Triggered exit object at", obj.x, obj.y);
+               import("../state/traits.js").then(({ markTaskCompleted }) => {
+        markTaskCompleted("LibraryScene");
+      });
 
+const gameScene = this.scene.get("GameScene");
+      if (gameScene && gameScene.updateMinimapDotColor) {
+        gameScene.updateMinimapDotColor("LibraryScene");
+      }
               // Pause library scene + launch situation
               this.scene.pause();
               this.scene.start("GameScene");
@@ -180,27 +229,51 @@ export default class LibraryScene extends Phaser.Scene {
     }
   }
   createAnimations() {
+    // Get the selected character
+    const playerCharacter =
+      this.registry.get("playerCharacter") ||
+      localStorage.getItem("selectedCharacter") ||
+      "maleAdventurer";
+
+    // Destroy existing animations if they exist
+    if (this.anims.exists("walk-down")) this.anims.remove("walk-down");
+    if (this.anims.exists("walk-left")) this.anims.remove("walk-left");
+    if (this.anims.exists("walk-right")) this.anims.remove("walk-right");
+    if (this.anims.exists("walk-up")) this.anims.remove("walk-up");
+
     this.anims.create({
       key: "walk-down",
-      frames: this.anims.generateFrameNumbers("player", { start: 22, end: 23 }),
+      frames: this.anims.generateFrameNumbers(playerCharacter, {
+        start: 22,
+        end: 23,
+      }),
       frameRate: 8,
       repeat: -1,
     });
     this.anims.create({
       key: "walk-left",
-      frames: this.anims.generateFrameNumbers("player", { start: 16, end: 18 }),
+      frames: this.anims.generateFrameNumbers(playerCharacter, {
+        start: 16,
+        end: 18,
+      }),
       frameRate: 8,
       repeat: -1,
     });
     this.anims.create({
       key: "walk-right",
-      frames: this.anims.generateFrameNumbers("player", { start: 19, end: 21 }),
+      frames: this.anims.generateFrameNumbers(playerCharacter, {
+        start: 19,
+        end: 21,
+      }),
       frameRate: 8,
       repeat: -1,
     });
     this.anims.create({
       key: "walk-up",
-      frames: this.anims.generateFrameNumbers("player", { start: 22, end: 23 }),
+      frames: this.anims.generateFrameNumbers(playerCharacter, {
+        start: 22,
+        end: 23,
+      }),
       frameRate: 8,
       repeat: -1,
     });
