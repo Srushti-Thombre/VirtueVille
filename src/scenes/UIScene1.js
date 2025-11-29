@@ -59,6 +59,8 @@ class UIScene1 extends Phaser.Scene {
     // Add Logout Button
     this.createLogoutButton();
 
+      this.createLessonsButton();
+
     this.registry.events.on("changedata-score", this.updateScore, this);
     this.scene.bringToTop(); // bring UIScene graphics to top layer
   }
@@ -166,7 +168,7 @@ class UIScene1 extends Phaser.Scene {
     buttonBg.setScrollFactor(0);
     buttonBg.setDepth(1000);
     buttonBg.setInteractive(
-      new Phaser.Geom.Rectangle(buttonX, buttonY, buttonSize, buttonSize),
+     new Phaser.Geom.Rectangle(buttonX, buttonY, buttonSize, buttonSize),
       Phaser.Geom.Rectangle.Contains
     );
 
@@ -711,6 +713,79 @@ class UIScene1 extends Phaser.Scene {
       }
     });
   }
+   createLessonsButton() {
+    const width = this.cameras.main.width;
+    const height = this.cameras.main.height;
+
+    // Position next to Dashboard button
+    const buttonX = 420 + 110; // right after Logout button
+    const buttonY = height - 50;
+    const buttonWidth = 120;
+    const buttonHeight = 40;
+
+    // Button background
+    const buttonBg = this.add.graphics();
+    buttonBg.fillGradientStyle(0x673ab7, 0x673ab7, 0x9575cd, 0x9575cd, 1);
+    buttonBg.fillRoundedRect(buttonX, buttonY, buttonWidth, buttonHeight, 10);
+    buttonBg.lineStyle(2, 0xb39ddb, 1);
+    buttonBg.strokeRoundedRect(buttonX, buttonY, buttonWidth, buttonHeight, 10);
+    buttonBg.setScrollFactor(0);
+    buttonBg.setDepth(1000);
+    buttonBg.setInteractive(
+      new Phaser.Geom.Rectangle(buttonX, buttonY, buttonWidth, buttonHeight),
+      Phaser.Geom.Rectangle.Contains
+    );
+
+    // Button text
+    const buttonText = this.add
+      .text(buttonX + buttonWidth / 2, buttonY + 10, "🎥 Lessons", {
+        fontFamily: "Poppins, Arial, sans-serif",
+        fontSize: "14px",
+        fill: "#ffffff",
+        fontStyle: "bold",
+      })
+      .setOrigin(0.5, 0)
+      .setScrollFactor(0)
+      .setDepth(1001);
+
+    // Hover effect
+    buttonBg.on("pointerover", () => {
+      buttonBg.clear();
+      buttonBg.fillGradientStyle(0x7e57c2, 0x7e57c2, 0xb388ff, 0xb388ff, 1);
+      buttonBg.fillRoundedRect(buttonX, buttonY, buttonWidth, buttonHeight, 10);
+      buttonBg.lineStyle(3, 0xd1c4e9, 1);
+      buttonBg.strokeRoundedRect(buttonX, buttonY, buttonWidth, buttonHeight, 10);
+
+      this.tweens.add({
+        targets: buttonText,
+        scale: 1.1,
+        duration: 200,
+        ease: "Back.easeOut",
+      });
+    });
+
+    buttonBg.on("pointerout", () => {
+      buttonBg.clear();
+      buttonBg.fillGradientStyle(0x673ab7, 0x673ab7, 0x9575cd, 0x9575cd, 1);
+      buttonBg.fillRoundedRect(buttonX, buttonY, buttonWidth, buttonHeight, 10);
+      buttonBg.lineStyle(2, 0xb39ddb, 1);
+      buttonBg.strokeRoundedRect(buttonX, buttonY, buttonWidth, buttonHeight, 10);
+
+      this.tweens.add({
+        targets: buttonText,
+        scale: 1,
+        duration: 200,
+        ease: "Back.easeIn",
+      });
+    });
+
+    // Click handler - open lessons page
+    buttonBg.on("pointerdown", () => {
+      console.log("✅ Opening lessons page");
+      window.open("view/lessons.html", "_blank"); // Or "_self" for same tab
+    });
+  }
+
 
   updateScore(parent, value, previousValue) {
     this.scoreText.setText(`Virtue Points: ${value}`);
@@ -736,6 +811,7 @@ class UIScene1 extends Phaser.Scene {
       });
     }
   }
+  
 }
 
 export default UIScene1;

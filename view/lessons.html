@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VirtueVille Lessons</title>
+
+  <style>
+    /* 🌈 --- BASIC PAGE STYLING --- */
+    body {
+      margin: 0;
+      font-family: "Poppins", sans-serif;
+      background: linear-gradient(135deg, #c3e5f5, #e9defa);
+      text-align: center;
+      color: #3c1361;
+      padding: 20px;
+    }
+
+    h1 {
+      color: #4a148c;
+      font-size: 2.4em;
+      margin-top: 20px;
+      text-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+    }
+
+    /* 📦 --- EACH VIDEO CARD STYLING --- */
+    .lesson-card {
+      background: #ffffffaa;
+      border-radius: 20px;
+      padding: 20px;
+      margin: 30px auto;
+      max-width: 700px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .lesson-card:hover {
+      transform: scale(1.02);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    }
+
+    h3 {
+      color: #6a1b9a;
+      font-size: 1.4em;
+      margin-bottom: 10px;
+    }
+
+    /* 🎥 --- VIDEO ELEMENT STYLE --- */
+    video, iframe {
+      width: 90%;
+      max-width: 600px;
+      border-radius: 15px;
+      margin-top: 10px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+
+    /* 🔙 --- BACK BUTTON STYLE --- */
+    a.back-btn {
+      display: inline-block;
+      margin-top: 40px;
+      padding: 12px 24px;
+      background-color: #6a1b9a;
+      color: #fff;
+      border-radius: 10px;
+      text-decoration: none;
+      font-weight: bold;
+      font-size: 1em;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      transition: 0.3s;
+    }
+
+    a.back-btn:hover {
+      background-color: #8e24aa;
+      transform: scale(1.05);
+    }
+
+    footer {
+      margin-top: 50px;
+      font-size: 0.9em;
+      color: #555;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- 🌱 PAGE HEADER -->
+  <h1>🌱 VirtueVille – Lesson Videos 🌱</h1>
+
+  <!-- ============================
+       LESSON 1 VIDEO CARD
+       Make sure the file path below matches your folder structure
+       Example: assets/videos/scene1_lesson.mp4
+       ============================ -->
+  <div class="lesson-card">
+    <h3>Scene 1: The lost key Choice</h3>
+    <video controls src="../public/vedio_asset/VirtueVille_ Lost Keys.mp4">
+      <!-- If video doesn’t load, double-check this path -->
+      Your browser does not support the video tag.
+    </video>
+  </div>
+
+  <!-- ============================
+       LESSON 2 VIDEO CARD
+       Replace the file name if yours is different
+       ============================ -->
+  <div class="lesson-card">
+    <h3>Scene 2: The garden scene</h3>
+    <video controls src="../public/vedio_asset/The Garden Choice.mp4">
+      Your browser does not support the video tag.
+    </video>
+  </div>
+
+  <!-- ============================
+       LESSON 3 VIDEO CARD
+       ============================ -->
+  <div class="lesson-card">
+    <h3>Scene 3: The library scene</h3>
+    <video controls src="../public/vedio_asset/WhatsApp Video 2025-10-31 at 00.50.10_06c3fa82.mp4">
+      Your browser does not support the video tag.
+    </video>
+  </div>
+
+  <!-- 🟣 BACK BUTTON: goes back to your main game -->
+  <!-- If your main game file name is different (e.g. game.html), change href below -->
+  <a href="index.html" class="back-btn">⬅ Back to Game</a>
+
+  <!-- 🪴 FOOTER TEXT -->
+  <footer>
+    © 2025 VirtueVille | Learn. Choose. Grow. 🌻
+  </footer>
+</body>
+</html>
