@@ -2,6 +2,8 @@
 
 A web-based moral decision-making game that helps players develop ethical reasoning and character traits through interactive scenarios.
 
+🎮 **[Play VirtueVille Live](https://virtueville.onrender.com)**
+
 ## 🎮 About the Game
 
 VirtueVille is an educational game where players navigate through a virtual city and face various moral dilemmas. Players make choices that affect their character traits like empathy, responsibility, courage, and more. The game uses the Phaser.js framework to create an engaging 2D top-down experience.
