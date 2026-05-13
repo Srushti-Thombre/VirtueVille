@@ -2,7 +2,7 @@
 
 A web-based moral decision-making game that helps players develop ethical reasoning and character traits through interactive scenarios.
 
-🎮 **[Play VirtueVille Live (Ctrl + Click to open in a new tab)](https://onrender.com)**
+🎮 **[Play VirtueVille Live (Ctrl + Click to open in a new tab)](https://virtueville.onrender.com)**
 
 ## 🎮 About the Game
 
