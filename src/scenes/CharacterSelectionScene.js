@@ -4,6 +4,16 @@ export default class CharacterSelectionScene extends Phaser.Scene {
   constructor() {
     super("CharacterSelectionScene");
     this.selectedCharacter = null;
+    this.midGameChange = false; // Track if this is a mid-game character change
+  }
+
+  init(data) {
+    // Check if this is a mid-game character change
+    this.midGameChange = data?.midGameChange || false;
+    console.log(
+      "CharacterSelectionScene init - midGameChange:",
+      this.midGameChange
+    );
   }
 
   preload() {
@@ -31,6 +41,21 @@ export default class CharacterSelectionScene extends Phaser.Scene {
   }
 
   create() {
+    // Check if user has already completed setup - but NOT if this is a mid-game change
+    const selectedCharacter = localStorage.getItem("selectedCharacter");
+    const tutorialCompleted = localStorage.getItem("tutorialCompleted");
+
+    // Only skip if returning player AND NOT a mid-game character change
+    if (selectedCharacter && tutorialCompleted && !this.midGameChange) {
+      // User is returning - skip character selection and go to game
+      console.log(
+        "✅ Returning player detected - skipping CharacterSelectionScene"
+      );
+      this.scene.stop("CharacterSelectionScene");
+      this.scene.start("GameScene");
+      return; // Exit early
+    }
+
     const width = this.cameras.main.width;
     const height = this.cameras.main.height;
 
@@ -265,7 +290,11 @@ export default class CharacterSelectionScene extends Phaser.Scene {
       button.clear();
       button.fillStyle(0xf0f0f0, 1);
       button.fillRoundedRect(x - 100, y - 25, 200, 50, 25);
+
+      /* this.tweens.add({
+=======
       /*this.tweens.add({
+>>>>>>> e97009af184e8c9a0b082581d247a016254b815f
         targets: [button, buttonText],
         scaleX: 1.05,
         scaleY: 1.05,

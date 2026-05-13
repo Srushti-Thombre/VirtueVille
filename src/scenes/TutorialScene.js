@@ -107,10 +107,10 @@ export default class TutorialScene extends Phaser.Scene {
       .text(
         0,
         -40,
-        "⬆️ W or ↑ Arrow - Move Up\n" +
-          "⬇️ S or ↓ Arrow - Move Down\n" +
-          "⬅️ A or ← Arrow - Move Left\n" +
-          "➡️ D or → Arrow - Move Right",
+        "⬆️  ↑ Arrow - Move Up\n" +
+        "⬇️  ↓ Arrow - Move Down\n" +
+        "⬅️  ← Arrow - Move Left\n" +
+        "➡️  → Arrow - Move Right",
         {
           fontSize: "20px",
           fontFamily: "Arial, sans-serif",

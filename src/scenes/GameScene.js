@@ -1,7 +1,12 @@
 import * as Phaser from "https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.esm.js";
 import { VirtueSystem } from "../state/VirtueSystem.js";
 import { minimapNodes } from "../ui/minimapConfig.js"; // This import is required!
-import { isTaskCompleted, markTaskCompleted, traits, saveProgress } from "../state/traits.js";
+import {
+  isTaskCompleted,
+  markTaskCompleted,
+  traits,
+  saveProgress,
+} from "../state/traits.js";
 import { DilemmaStyles } from "../utils/dilemmaStyles.js";
 
 export default class GameScene extends Phaser.Scene {
@@ -409,10 +414,29 @@ export default class GameScene extends Phaser.Scene {
     // Create background using DilemmaStyles
     const bg = this.add.graphics();
     bg.setScrollFactor(0).setDepth(1000);
-    bg.fillStyle(DilemmaStyles.modal.backgroundColor, DilemmaStyles.modal.backgroundAlpha);
-    bg.fillRoundedRect(dialogX - boxWidth / 2, dialogY - boxHeight / 2, boxWidth, boxHeight, DilemmaStyles.modal.borderRadius);
-    bg.lineStyle(DilemmaStyles.modal.borderWidth, DilemmaStyles.modal.borderColor, 1);
-    bg.strokeRoundedRect(dialogX - boxWidth / 2, dialogY - boxHeight / 2, boxWidth, boxHeight, DilemmaStyles.modal.borderRadius);
+    bg.fillStyle(
+      DilemmaStyles.modal.backgroundColor,
+      DilemmaStyles.modal.backgroundAlpha
+    );
+    bg.fillRoundedRect(
+      dialogX - boxWidth / 2,
+      dialogY - boxHeight / 2,
+      boxWidth,
+      boxHeight,
+      DilemmaStyles.modal.borderRadius
+    );
+    bg.lineStyle(
+      DilemmaStyles.modal.borderWidth,
+      DilemmaStyles.modal.borderColor,
+      1
+    );
+    bg.strokeRoundedRect(
+      dialogX - boxWidth / 2,
+      dialogY - boxHeight / 2,
+      boxWidth,
+      boxHeight,
+      DilemmaStyles.modal.borderRadius
+    );
 
     const mainText = this.add
       .text(dialogX, dialogY - 70, "What should I do?", {
@@ -465,11 +489,11 @@ export default class GameScene extends Phaser.Scene {
       // click event
       optionText.on("pointerdown", () => {
         console.log(`Option selected: ${opt.text}`);
-        
+
         // Process the choice and award traits
         let reason = "";
         let selectedTraits = {};
-        
+
         switch (opt.id) {
           case "help": // Call for help
             reason = "Called for help - showing responsibility and care";
@@ -488,20 +512,20 @@ export default class GameScene extends Phaser.Scene {
             selectedTraits = { selfishness: 2, empathy: -2, fear: 1 };
             break;
         }
-        
+
         // Apply traits
         for (let t in selectedTraits) {
           traits[t] = (traits[t] || 0) + selectedTraits[t];
         }
         saveProgress();
-        
+
         // Award virtue points (recalculated from traits)
         VirtueSystem.awardPoints(this, 0, reason);
         console.log(`✅ Parking Lot: Applied traits:`, selectedTraits);
-        
+
         // Mark task as completed
         markTaskCompleted("parkingLotTask");
-        
+
         console.log("Player position before:", this.player.x, this.player.y);
         console.log(
           "Camera scroll before:",
@@ -652,16 +676,14 @@ export default class GameScene extends Phaser.Scene {
       this.inParkingLotScene = false;
       this.input.keyboard.enabled = true;
 
-     // Mark parking lot task as completed
-markTaskCompleted("GameScene");  // 👈 make sure the key matches the minimap node’s key
-saveProgress();
-console.log("✅ Parking lot task completed");
+      saveProgress();
+      console.log("✅ Parking lot task completed");
 
-// ✅ Update minimap dot color immediately
-const gameScene = this.scene.get("GameScene");
-if (gameScene?.updateMinimapDotColor) {
-  gameScene.updateMinimapDotColor("ParkingLotScene");
-}
+      // ✅ Update minimap dot color immediately
+      const gameScene = this.scene.get("GameScene");
+      if (gameScene?.updateMinimapDotColor) {
+        gameScene.updateMinimapDotColor("ParkingLot");
+      }
 
       console.log(
         "Camera follow resumed. Player at:",
@@ -684,103 +706,109 @@ if (gameScene?.updateMinimapDotColor) {
 
   //import { isTaskCompleted } from "../state/traits.js"; // make sure this import exists
 
-initHtmlMinimap(map) {
-  this.minimapContainer = document.getElementById("minimap");
-  if (!this.minimapContainer) {
-    console.error("❌ Minimap HTML element not found!");
-    return;
-  }
+  initHtmlMinimap(map) {
+    this.minimapContainer = document.getElementById("minimap");
+    if (!this.minimapContainer) {
+      console.error("❌ Minimap HTML element not found!");
+      return;
+    }
 
-  this.mapWidth = map.widthInPixels;
-  this.mapHeight = map.heightInPixels;
+    this.mapWidth = map.widthInPixels;
+    this.mapHeight = map.heightInPixels;
 
-  console.log("🧭 Initializing HTML Minimap with map size:", this.mapWidth, this.mapHeight);
+    console.log(
+      "🧭 Initializing HTML Minimap with map size:",
+      this.mapWidth,
+      this.mapHeight
+    );
 
-  minimapNodes.forEach((node) => {
-  const dot = document.createElement("div");
-  dot.style.position = "absolute";
-  dot.style.width = "10px";
-  dot.style.height = "10px";
-  dot.style.borderRadius = "50%";
-  dot.style.border = "1px solid white";
-  dot.style.transform = "translate(-50%, -50%)";
-  dot.style.left = `${(node.x / this.mapWidth) * 100}%`;
-  dot.style.top = `${(node.y / this.mapHeight) * 100}%`;
-  dot.dataset.key = node.key;
-  dot.classList.add("minimap-dot");
-    // ✅ Set color based on completion
-    const sceneDone = isTaskCompleted(node.key);
-    if (sceneDone) {
-      dotstyle.backgroundColor = "green";
-      dot.style.boxShadow = "0 0 8px 2px rgba(0,255,0,0.7)";
-    } else {
-      dot.style.backgroundColor = "red";
-       dot.style.boxShadow = "none";
-    } 
-   
+    minimapNodes.forEach((node) => {
+      const dot = document.createElement("div");
+      dot.style.position = "absolute";
+      dot.style.width = "10px";
+      dot.style.height = "10px";
+      dot.style.borderRadius = "50%";
+      dot.style.border = "1px solid white";
+      dot.style.transform = "translate(-50%, -50%)";
+      dot.style.left = `${(node.x / this.mapWidth) * 100}%`;
+      dot.style.top = `${(node.y / this.mapHeight) * 100}%`;
+      dot.dataset.key = node.key;
+      dot.classList.add("minimap-dot");
+      // ✅ Set color based on completion
+      const sceneDone = isTaskCompleted(node.key);
+      if (sceneDone) {
+        dotstyle.backgroundColor = "green";
+        dot.style.boxShadow = "0 0 8px 2px rgba(0,255,0,0.7)";
+      } else {
+        dot.style.backgroundColor = "red";
+        dot.style.boxShadow = "none";
+      }
 
-    this.minimapContainer.appendChild(dot);
+      this.minimapContainer.appendChild(dot);
 
-    console.log(`📍 Minimap dot created for scene "${node.key}" at`, {
-      x: node.x,
-      y: node.y,
-      color: dot.style.backgroundColor,
+      console.log(`📍 Minimap dot created for scene "${node.key}" at`, {
+        x: node.x,
+        y: node.y,
+        color: dot.style.backgroundColor,
+      });
     });
-  });
 
-  // 🧍 Player dot setup
-  const playerDot = document.createElement("div");
-  playerDot.style.position = "absolute";
-  playerDot.style.width = "8px";
-  playerDot.style.height = "8px";
-  playerDot.style.borderRadius = "50%";
-  playerDot.style.backgroundColor = "black";
-  playerDot.style.border = "2px solid yellow";
-  playerDot.style.transform = "translate(-50%, -50%)";
-  playerDot.style.zIndex = "1";
-  playerDot.style.display = "none";
-  playerDot.classList.add("player-dot");
+    // 🧍 Player dot setup
+    const playerDot = document.createElement("div");
+    playerDot.style.position = "absolute";
+    playerDot.style.width = "8px";
+    playerDot.style.height = "8px";
+    playerDot.style.borderRadius = "50%";
+    playerDot.style.backgroundColor = "black";
+    playerDot.style.border = "2px solid yellow";
+    playerDot.style.transform = "translate(-50%, -50%)";
+    playerDot.style.zIndex = "1";
+    playerDot.style.display = "none";
+    playerDot.classList.add("player-dot");
 
-  this.playerDotElement = playerDot;
+    this.playerDotElement = playerDot;
     this.minimapContainer.appendChild(playerDot);
 
-
-  console.log("✅ Player dot created successfully.");
-}
-
-updateMinimapDotColor(sceneKey) {
-  const minimap = document.getElementById("minimap");
-  if (!minimap) {
-    console.warn("⚠️ Minimap element not found in DOM!");
-    return;
+    console.log("✅ Player dot created successfully.");
   }
 
-  const dots = minimap.querySelectorAll(".minimap-dot");
-  console.log(`🎯 Trying to update minimap dot for scene: "${sceneKey}"`);
-  console.log(`🧮 Found ${dots.length} hotspot dots total.`);
-
-  let matched = false;
-  dots.forEach((dot) => {
-    console.log(`🔹 Dot key = "${dot.dataset.key}", color = ${dot.style.backgroundColor}`);
-    if (dot.dataset.key === sceneKey) {
-      matched = true;
-      console.log(`✅ Match found → changing color to green for scene "${sceneKey}"`);
-      //dot.style.backgroundColor = "green";
-      dot.style.setProperty("background-color", "green", "important");
-dot.style.transition = "background-color 0.4s ease, box-shadow 0.4s ease";
-
-      dot.style.border = "1px solid white";
-      dot.style.boxShadow = "0 0 8px 2px rgba(0,255,0,0.7)";
-      dot.style.zIndex = "5";
-      dot.style.transition = "background-color 0.4s, box-shadow 0.4s";
+  updateMinimapDotColor(sceneKey) {
+    const minimap = document.getElementById("minimap");
+    if (!minimap) {
+      console.warn("⚠️ Minimap element not found in DOM!");
+      return;
     }
-  });
 
-  if (!matched) {
-    console.warn(`🚫 No minimap dot found matching key "${sceneKey}"`);
+    const dots = minimap.querySelectorAll(".minimap-dot");
+    console.log(`🎯 Trying to update minimap dot for scene: "${sceneKey}"`);
+    console.log(`🧮 Found ${dots.length} hotspot dots total.`);
+
+    let matched = false;
+    dots.forEach((dot) => {
+      console.log(
+        `🔹 Dot key = "${dot.dataset.key}", color = ${dot.style.backgroundColor}`
+      );
+      if (dot.dataset.key === sceneKey) {
+        matched = true;
+        console.log(
+          `✅ Match found → changing color to green for scene "${sceneKey}"`
+        );
+        //dot.style.backgroundColor = "green";
+        dot.style.setProperty("background-color", "green", "important");
+        dot.style.transition =
+          "background-color 0.4s ease, box-shadow 0.4s ease";
+
+        dot.style.border = "1px solid white";
+        dot.style.boxShadow = "0 0 8px 2px rgba(0,255,0,0.7)";
+        dot.style.zIndex = "5";
+        dot.style.transition = "background-color 0.4s, box-shadow 0.4s";
+      }
+    });
+
+    if (!matched) {
+      console.warn(`🚫 No minimap dot found matching key "${sceneKey}"`);
+    }
   }
-}
-
 
   playBackgroundMusic() {
     // If music is already playing, just update volume if needed

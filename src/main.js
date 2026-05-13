@@ -74,7 +74,12 @@ async function initGame() {
     console.log("✅ Progress loaded");
 
     const game = new Phaser.Game(config);
-    game.registry.set("score", 0);
+
+    // Import VirtueSystem to calculate initial score from loaded traits
+    const { VirtueSystem } = await import("./state/VirtueSystem.js");
+    const initialScore = VirtueSystem.calculateVirtuePoints();
+    game.registry.set("score", initialScore);
+    console.log("✅ Initial virtue score set:", initialScore);
 
     // Load and set initial volume settings
     try {

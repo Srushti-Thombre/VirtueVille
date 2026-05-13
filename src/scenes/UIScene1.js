@@ -59,7 +59,7 @@ class UIScene1 extends Phaser.Scene {
     // Add Logout Button
     this.createLogoutButton();
 
-      this.createLessonsButton();
+    this.createLessonsButton();
 
     this.registry.events.on("changedata-score", this.updateScore, this);
     this.scene.bringToTop(); // bring UIScene graphics to top layer
@@ -140,8 +140,8 @@ class UIScene1 extends Phaser.Scene {
         this.scene.stop("CharacterSelectionScene");
       }
 
-      // Launch character selection scene
-      this.scene.launch("CharacterSelectionScene");
+      // Launch character selection scene with flag indicating mid-game change
+      this.scene.launch("CharacterSelectionScene", { midGameChange: true });
 
       // Bring it to the top so it's visible
       this.scene.bringToTop("CharacterSelectionScene");
@@ -168,7 +168,7 @@ class UIScene1 extends Phaser.Scene {
     buttonBg.setScrollFactor(0);
     buttonBg.setDepth(1000);
     buttonBg.setInteractive(
-     new Phaser.Geom.Rectangle(buttonX, buttonY, buttonSize, buttonSize),
+      new Phaser.Geom.Rectangle(buttonX, buttonY, buttonSize, buttonSize),
       Phaser.Geom.Rectangle.Contains
     );
 
@@ -380,16 +380,11 @@ class UIScene1 extends Phaser.Scene {
       .setOrigin(0);
 
     const controlsText = this.add
-      .text(
-        leftMargin + 20,
-        yStart + 25,
-        "WASD or Arrow Keys - Move your character",
-        {
-          fontSize: "15px",
-          fontFamily: "Arial, sans-serif",
-          fill: "#FFFFFF",
-        }
-      )
+      .text(leftMargin + 20, yStart + 25, "Arrow Keys - Move your character", {
+        fontSize: "15px",
+        fontFamily: "Arial, sans-serif",
+        fill: "#FFFFFF",
+      })
       .setOrigin(0);
 
     // Objective section
@@ -587,7 +582,13 @@ class UIScene1 extends Phaser.Scene {
       buttonBg.fillGradientStyle(0x1fb896, 0x1fb896, 0x26d9ab, 0x26d9ab, 1);
       buttonBg.fillRoundedRect(buttonX, buttonY, buttonWidth, buttonHeight, 10);
       buttonBg.lineStyle(3, 0x3be9c1, 1);
-      buttonBg.strokeRoundedRect(buttonX, buttonY, buttonWidth, buttonHeight, 10);
+      buttonBg.strokeRoundedRect(
+        buttonX,
+        buttonY,
+        buttonWidth,
+        buttonHeight,
+        10
+      );
 
       this.tweens.add({
         targets: buttonText,
@@ -602,7 +603,13 @@ class UIScene1 extends Phaser.Scene {
       buttonBg.fillGradientStyle(0x16a085, 0x16a085, 0x1abc9c, 0x1abc9c, 1);
       buttonBg.fillRoundedRect(buttonX, buttonY, buttonWidth, buttonHeight, 10);
       buttonBg.lineStyle(2, 0x2ecc71, 1);
-      buttonBg.strokeRoundedRect(buttonX, buttonY, buttonWidth, buttonHeight, 10);
+      buttonBg.strokeRoundedRect(
+        buttonX,
+        buttonY,
+        buttonWidth,
+        buttonHeight,
+        10
+      );
 
       this.tweens.add({
         targets: buttonText,
@@ -660,7 +667,13 @@ class UIScene1 extends Phaser.Scene {
       buttonBg.fillGradientStyle(0xd44637, 0xd44637, 0xf15b4d, 0xf15b4d, 1);
       buttonBg.fillRoundedRect(buttonX, buttonY, buttonWidth, buttonHeight, 10);
       buttonBg.lineStyle(3, 0xf39c8f, 1);
-      buttonBg.strokeRoundedRect(buttonX, buttonY, buttonWidth, buttonHeight, 10);
+      buttonBg.strokeRoundedRect(
+        buttonX,
+        buttonY,
+        buttonWidth,
+        buttonHeight,
+        10
+      );
 
       this.tweens.add({
         targets: buttonText,
@@ -675,7 +688,13 @@ class UIScene1 extends Phaser.Scene {
       buttonBg.fillGradientStyle(0xc0392b, 0xc0392b, 0xe74c3c, 0xe74c3c, 1);
       buttonBg.fillRoundedRect(buttonX, buttonY, buttonWidth, buttonHeight, 10);
       buttonBg.lineStyle(2, 0xe67e73, 1);
-      buttonBg.strokeRoundedRect(buttonX, buttonY, buttonWidth, buttonHeight, 10);
+      buttonBg.strokeRoundedRect(
+        buttonX,
+        buttonY,
+        buttonWidth,
+        buttonHeight,
+        10
+      );
 
       this.tweens.add({
         targets: buttonText,
@@ -700,7 +719,7 @@ class UIScene1 extends Phaser.Scene {
             // Clear local storage
             localStorage.removeItem("virtueVille_user");
             localStorage.removeItem("virtueVille_save");
-            
+
             // Redirect to login page
             window.location.href = "/auth.html";
           } else {
@@ -713,7 +732,7 @@ class UIScene1 extends Phaser.Scene {
       }
     });
   }
-   createLessonsButton() {
+  createLessonsButton() {
     const width = this.cameras.main.width;
     const height = this.cameras.main.height;
 
@@ -754,7 +773,13 @@ class UIScene1 extends Phaser.Scene {
       buttonBg.fillGradientStyle(0x7e57c2, 0x7e57c2, 0xb388ff, 0xb388ff, 1);
       buttonBg.fillRoundedRect(buttonX, buttonY, buttonWidth, buttonHeight, 10);
       buttonBg.lineStyle(3, 0xd1c4e9, 1);
-      buttonBg.strokeRoundedRect(buttonX, buttonY, buttonWidth, buttonHeight, 10);
+      buttonBg.strokeRoundedRect(
+        buttonX,
+        buttonY,
+        buttonWidth,
+        buttonHeight,
+        10
+      );
 
       this.tweens.add({
         targets: buttonText,
@@ -769,7 +794,13 @@ class UIScene1 extends Phaser.Scene {
       buttonBg.fillGradientStyle(0x673ab7, 0x673ab7, 0x9575cd, 0x9575cd, 1);
       buttonBg.fillRoundedRect(buttonX, buttonY, buttonWidth, buttonHeight, 10);
       buttonBg.lineStyle(2, 0xb39ddb, 1);
-      buttonBg.strokeRoundedRect(buttonX, buttonY, buttonWidth, buttonHeight, 10);
+      buttonBg.strokeRoundedRect(
+        buttonX,
+        buttonY,
+        buttonWidth,
+        buttonHeight,
+        10
+      );
 
       this.tweens.add({
         targets: buttonText,
@@ -785,7 +816,6 @@ class UIScene1 extends Phaser.Scene {
       window.open("view/lessons.html", "_blank"); // Or "_self" for same tab
     });
   }
-
 
   updateScore(parent, value, previousValue) {
     this.scoreText.setText(`Virtue Points: ${value}`);
@@ -811,7 +841,6 @@ class UIScene1 extends Phaser.Scene {
       });
     }
   }
-  
 }
 
 export default UIScene1;
