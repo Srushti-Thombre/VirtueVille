@@ -18,7 +18,7 @@ app.use(
     cookie: { maxAge: 24 * 60 * 60 * 1000, httpOnly: true, secure: false },
   })
 );
-const port = 3000;
+const PORT = process.env.PORT || 3000;
 
 // Static
 app.get("/favicon.ico", (req, res) => res.status(204).end());
@@ -224,4 +224,4 @@ app.use((err, req, res, next) => {
 });
 
 // Start
-app.listen(port, () => console.log(`http://localhost:${port}`));
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
