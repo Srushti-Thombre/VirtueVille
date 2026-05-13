@@ -1,5 +1,8 @@
+import dotenv from "dotenv";
+dotenv.config();
+
 import express from "express";
-import sqlite3 from "sqlite3";
+import { createClient } from "@libsql/client";
 import path from "path";
 import { fileURLToPath } from "url";
 import session from "express-session";
@@ -20,6 +23,43 @@ app.use(
 );
 const PORT = process.env.PORT || 3000;
 
+// Turso DB Client
+const db = createClient({
+  url: process.env.TURSO_DATABASE_URL,
+  authToken: process.env.TURSO_AUTH_TOKEN,
+});
+
+// Database Initialization
+async function initDB() {
+  try {
+    await db.execute(`CREATE TABLE IF NOT EXISTS users (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      username TEXT NOT NULL UNIQUE,
+      email TEXT NOT NULL UNIQUE,
+      password TEXT NOT NULL
+    )`);
+
+    await db.execute(`CREATE TABLE IF NOT EXISTS user_traits (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      empathy INTEGER DEFAULT 0,
+      responsibility INTEGER DEFAULT 0,
+      courage INTEGER DEFAULT 0,
+      fear INTEGER DEFAULT 0,
+      selfishness INTEGER DEFAULT 0,
+      dishonesty INTEGER DEFAULT 0,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id),
+      UNIQUE(user_id)
+    )`);
+
+    console.log("Tables ready.");
+  } catch (err) {
+    console.error("DB initialization failed:", err.message);
+    process.exit(1);
+  }
+}
+
 // Static
 app.get("/favicon.ico", (req, res) => res.status(204).end());
 app.use(express.static(__dirname));
@@ -37,116 +77,73 @@ app.use((err, req, res, next) => {
   next(err);
 });
 
-// DATABASE — FIXED: Serialize + Callbacks
-const db = new sqlite3.Database("users.db", (err) => {
-  if (err) {
-    console.error("DB connection failed:", err.message);
-    process.exit(1);
-  }
-  console.log("Connected to users.db");
-
-  db.serialize(() => {
-    // Users table with UNIQUE constraints
-    db.run(
-      `CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        username TEXT NOT NULL UNIQUE,
-        email TEXT NOT NULL UNIQUE,
-        password TEXT NOT NULL
-      )`,
-      (err) => {
-        if (err) console.error("Users table error:", err.message);
-        else console.log("Users table ready.");
-      }
-    );
-
-    // Traits table
-    db.run(
-      `CREATE TABLE IF NOT EXISTS user_traits (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER NOT NULL,
-        empathy INTEGER DEFAULT 0,
-        responsibility INTEGER DEFAULT 0,
-        courage INTEGER DEFAULT 0,
-        fear INTEGER DEFAULT 0,
-        selfishness INTEGER DEFAULT 0,
-        dishonesty INTEGER DEFAULT 0,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (user_id) REFERENCES users(id),
-        UNIQUE(user_id)
-      )`,
-      (err) => {
-        if (err) console.error("Traits table error:", err.message);
-        else console.log("Traits table ready.");
-      }
-    );
-  });
-});
-
 // Pages
 app.get("/", (req, res) => res.sendFile(path.join(__dirname, "view", "index.html")));
 app.get("/auth.html", (req, res) => res.sendFile(path.join(__dirname, "view", "auth.html")));
 
-// REGISTER — FULLY FIXED
-app.post("/register", (req, res) => {
-  const { username, email, password } = req.body;
+// REGISTER
+app.post("/register", async (req, res) => {
+  try {
+    const { username, email, password } = req.body;
 
-  if (!username || !email || !password) {
-    return res.redirect("/auth.html?error=All fields required.");
-  }
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    return res.redirect("/auth.html?error=Invalid email.");
-  }
-  if (password.length < 6) {
-    return res.redirect("/auth.html?error=Password must be 6+ chars.");
-  }
-
-  const checkSql = `SELECT id FROM users WHERE username = ? OR email = ?`;
-  db.get(checkSql, [username, email], (err, row) => {
-    if (err) {
-      console.error("DB check error:", err.message);
-      return res.redirect("/auth.html?error=Server error.");
+    if (!username || !email || !password) {
+      return res.redirect("/auth.html?error=All fields required.");
     }
-    if (row) {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.redirect("/auth.html?error=Invalid email.");
+    }
+    if (password.length < 6) {
+      return res.redirect("/auth.html?error=Password must be 6+ chars.");
+    }
+
+    const checkResult = await db.execute({
+      sql: `SELECT id FROM users WHERE username = ? OR email = ?`,
+      args: [username, email],
+    });
+
+    if (checkResult.rows.length > 0) {
       return res.redirect("/auth.html?error=Username or email already taken.");
     }
 
-    db.run(
-      `INSERT INTO users (username, email, password) VALUES (?, ?, ?)`,
-      [username, email, password],
-      function (err) {
-        if (err) {
-          console.error("Insert error:", err.message);
-          return res.redirect("/auth.html?error=Registration failed.");
-        }
+    const insertResult = await db.execute({
+      sql: `INSERT INTO users (username, email, password) VALUES (?, ?, ?)`,
+      args: [username, email, password],
+    });
 
-        req.session.user = { id: this.lastID, username };
-        req.session.showWelcome = true;
-        req.session.save(() => res.redirect("/phaser.html"));
-      }
-    );
-  });
+    req.session.user = { id: insertResult.lastInsertRowid, username };
+    req.session.showWelcome = true;
+    req.session.save(() => res.redirect("/phaser.html"));
+  } catch (err) {
+    console.error("Register error:", err.message);
+    res.redirect("/auth.html?error=Registration failed.");
+  }
 });
 
-// LOGIN — FIXED
-app.post("/login", (req, res) => {
-  const { username, password } = req.body;
-  if (!username || !password) {
-    return res.redirect("/auth.html?error=Username and password required.");
-  }
-
-  db.get(
-    `SELECT * FROM users WHERE username = ? AND password = ?`,
-    [username, password],
-    (err, row) => {
-      if (err || !row) {
-        return res.redirect("/auth.html?error=Invalid username or password.");
-      }
-      req.session.user = { id: row.id, username: row.username };
-      req.session.showWelcome = true;
-      req.session.save(() => res.redirect("/phaser.html"));
+// LOGIN
+app.post("/login", async (req, res) => {
+  try {
+    const { username, password } = req.body;
+    if (!username || !password) {
+      return res.redirect("/auth.html?error=Username and password required.");
     }
-  );
+
+    const result = await db.execute({
+      sql: `SELECT * FROM users WHERE username = ? AND password = ?`,
+      args: [username, password],
+    });
+
+    if (result.rows.length === 0) {
+      return res.redirect("/auth.html?error=Invalid username or password.");
+    }
+
+    const row = result.rows[0];
+    req.session.user = { id: row.id, username: row.username };
+    req.session.showWelcome = true;
+    req.session.save(() => res.redirect("/phaser.html"));
+  } catch (err) {
+    console.error("Login error:", err.message);
+    res.redirect("/auth.html?error=Server error.");
+  }
 });
 
 // API Routes
@@ -161,48 +158,80 @@ app.post("/api/logout", (req, res) => {
   req.session.destroy(() => res.json({ success: true }));
 });
 
-app.post("/api/traits/save", (req, res) => {
-  if (!req.session.user) return res.status(401).json({ error: "Not logged in" });
-  const { traits } = req.body;
-  if (!traits) return res.status(400).json({ error: "Traits required" });
+app.post("/api/traits/save", async (req, res) => {
+  try {
+    if (!req.session.user) return res.status(401).json({ error: "Not logged in" });
+    const { traits } = req.body;
+    if (!traits) return res.status(400).json({ error: "Traits required" });
 
-  const sql = `INSERT INTO user_traits (user_id, empathy, responsibility, courage, fear, selfishness, dishonesty)
-               VALUES (?, ?, ?, ?, ?, ?, ?)
-               ON CONFLICT(user_id) DO UPDATE SET
-                 empathy = excluded.empathy,
-                 responsibility = excluded.responsibility,
-                 courage = excluded.courage,
-                 fear = excluded.fear,
-                 selfishness = excluded.selfishness,
-                 dishonesty = excluded.dishonesty,
-                 updated_at = CURRENT_TIMESTAMP`;
+    await db.execute({
+      sql: `INSERT INTO user_traits (user_id, empathy, responsibility, courage, fear, selfishness, dishonesty)
+             VALUES (?, ?, ?, ?, ?, ?, ?)
+             ON CONFLICT(user_id) DO UPDATE SET
+               empathy = excluded.empathy,
+               responsibility = excluded.responsibility,
+               courage = excluded.courage,
+               fear = excluded.fear,
+               selfishness = excluded.selfishness,
+               dishonesty = excluded.dishonesty,
+               updated_at = CURRENT_TIMESTAMP`,
+      args: [
+        req.session.user.id,
+        traits.empathy || 0,
+        traits.responsibility || 0,
+        traits.courage || 0,
+        traits.fear || 0,
+        traits.selfishness || 0,
+        traits.dishonesty || 0,
+      ],
+    });
 
-  db.run(sql, [
-    req.session.user.id,
-    traits.empathy || 0,
-    traits.responsibility || 0,
-    traits.courage || 0,
-    traits.fear || 0,
-    traits.selfishness || 0,
-    traits.dishonesty || 0,
-  ], (err) => {
-    if (err) return res.status(500).json({ error: "Save failed" });
     res.json({ success: true });
-  });
+  } catch (err) {
+    console.error("Traits save error:", err.message);
+    res.status(500).json({ error: "Save failed" });
+  }
 });
 
-app.get("/api/traits/get", (req, res) => {
-  if (!req.session.user) return res.status(401).json({ error: "Not logged in" });
-  db.get(`SELECT * FROM user_traits WHERE user_id = ?`, [req.session.user.id], (err, row) => {
-    res.json({ traits: row || { empathy: 0, responsibility: 0, courage: 0, fear: 0, selfishness: 0, dishonesty: 0 } });
-  });
+app.get("/api/traits/get", async (req, res) => {
+  try {
+    if (!req.session.user) return res.status(401).json({ error: "Not logged in" });
+
+    const result = await db.execute({
+      sql: `SELECT * FROM user_traits WHERE user_id = ?`,
+      args: [req.session.user.id],
+    });
+
+    const traits = result.rows[0] || {
+      empathy: 0,
+      responsibility: 0,
+      courage: 0,
+      fear: 0,
+      selfishness: 0,
+      dishonesty: 0,
+    };
+
+    res.json({ traits });
+  } catch (err) {
+    console.error("Traits get error:", err.message);
+    res.status(500).json({ error: "Failed to fetch traits" });
+  }
 });
 
-app.get("/api/traits/all", (req, res) => {
-  if (!req.session.user) return res.status(401).json({ error: "Not logged in" });
-  db.all(`SELECT u.username, t.* FROM user_traits t JOIN users u ON t.user_id = u.id ORDER BY t.updated_at DESC`, [], (err, rows) => {
-    res.json({ users: rows || [] });
-  });
+app.get("/api/traits/all", async (req, res) => {
+  try {
+    if (!req.session.user) return res.status(401).json({ error: "Not logged in" });
+
+    const result = await db.execute({
+      sql: `SELECT u.username, t.* FROM user_traits t JOIN users u ON t.user_id = u.id ORDER BY t.updated_at DESC`,
+      args: [],
+    });
+
+    res.json({ users: result.rows || [] });
+  } catch (err) {
+    console.error("Traits all error:", err.message);
+    res.status(500).json({ error: "Failed to fetch users" });
+  }
 });
 
 // Protected
@@ -223,5 +252,8 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: "Server error" });
 });
 
-// Start
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+// Start Server
+(async () => {
+  await initDB();
+  app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+})();
